@@ -1,0 +1,2572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ironline — Gym Workout Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+/* ---------- Design tokens ---------- */
+:root{
+  --ink:#F3F4F7;
+  --ink-dim:#171a21;
+  --bg:#0E1013;
+  --surface:#161920;
+  --surface-2:#1D2129;
+  --border:#2A2F3A;
+  --text:#EDEEF0;
+  --text-dim:#9AA0AC;
+  --text-faint:#5C6270;
+  --ember:#FF6A3D;
+  --ember-dim:#B84E2C;
+  --teal:#33D6C0;
+  --amber:#F2B84B;
+  --danger:#F1554C;
+  --good:#5FD187;
+  --radius-sm:10px;
+  --radius-md:16px;
+  --radius-lg:22px;
+  --font-display:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;
+  --font-body:'Inter',ui-sans-serif,system-ui,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#F4F5F7;
+  --surface:#FFFFFF;
+  --surface-2:#F0F1F4;
+  --border:#E1E3E9;
+  --text:#161920;
+  --text-dim:#5B6270;
+  --text-faint:#9299A6;
+  --ember:#E85A32;
+  --ember-dim:#C7481F;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,.font-display{font-family:var(--font-display);letter-spacing:-0.01em;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+.container{max-width:1180px;margin:0 auto;padding:0 20px;}
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:18px;
+}
+.card-flat{background:var(--surface-2);border-radius:var(--radius-sm);padding:14px;}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:600;font-size:14px;padding:11px 18px;border-radius:12px;
+  border:1px solid transparent;cursor:pointer;transition:transform .12s ease, opacity .12s ease;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--ember);color:#1A0B05;}
+.btn-primary:hover{background:var(--ember-dim);}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text);}
+.btn-ghost:hover{background:var(--surface-2);}
+.btn-danger{background:transparent;border-color:var(--danger);color:var(--danger);}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:10px;}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:100px;background:var(--surface-2);color:var(--text-dim);border:1px solid var(--border);}
+.input, select, textarea{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;
+}
+.input:focus, select:focus, textarea:focus{border-color:var(--ember);}
+label.field-label{font-size:12.5px;color:var(--text-dim);font-weight:600;margin-bottom:6px;display:block;}
+.field{margin-bottom:14px;}
+.grid{display:grid;gap:14px;}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+@media(max-width:820px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{
+  padding:9px 14px;border-radius:11px;border:1px solid var(--border);background:var(--surface-2);
+  font-size:13.5px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:.12s;
+}
+.chip.active{background:var(--ember);color:#1A0B05;border-color:var(--ember);}
+.progress-track{height:8px;border-radius:20px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--ember),var(--amber));border-radius:20px;transition:width .4s ease;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:flex;align-items:flex-end;justify-content:center;}
+@media(min-width:720px){.modal-backdrop{align-items:center;}}
+.modal-panel{background:var(--surface);border:1px solid var(--border);border-radius:22px 22px 0 0;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;padding:22px;animation:slideUp .22s ease;}
+@media(min-width:720px){.modal-panel{border-radius:20px;}}
+@keyframes slideUp{from{transform:translateY(24px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.fade-in{animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+.save-indicator{font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:6px;}
+.save-dot{width:6px;height:6px;border-radius:50%;background:var(--good);}
+.save-dot.saving{background:var(--amber);animation:pulse 1s infinite;}
+@keyframes pulse{50%{opacity:.35;}}
+/* nav */
+.sidenav{width:230px;flex-shrink:0;border-right:1px solid var(--border);min-height:100vh;padding:22px 14px;position:sticky;top:0;}
+.sidenav a, .navitem{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;color:var(--text-dim);font-weight:600;font-size:14.5px;cursor:pointer;margin-bottom:2px;}
+.sidenav a.active, .navitem.active{background:var(--surface-2);color:var(--text);}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:50;}
+.bottomnav .navitem{flex-direction:column;font-size:10.5px;gap:3px;padding:6px 4px;flex:1;text-align:center;color:var(--text-faint);border-radius:10px;}
+.bottomnav .navitem.active{color:var(--ember);background:transparent;}
+.icon{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+@media(min-width:900px){.bottomnav{display:none;}}
+@media(max-width:899px){.sidenav{display:none;}#mainpad{padding-bottom:88px;}}
+.stat-num{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1;}
+.stat-label{font-size:12.5px;color:var(--text-dim);font-weight:600;margin-top:4px;}
+.exlist-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);margin-bottom:10px;cursor:pointer;}
+.badge-difficulty{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;}
+.badge-Beginner{background:rgba(95,209,135,.15);color:var(--good);}
+.badge-Intermediate{background:rgba(242,184,75,.15);color:var(--amber);}
+.badge-Advanced{background:rgba(241,85,76,.15);color:var(--danger);}
+.day-tab{padding:10px 6px;border-radius:14px;text-align:center;border:1px solid var(--border);background:var(--surface-2);font-size:12px;font-weight:700;cursor:pointer;}
+.day-tab.today{border-color:var(--ember);}
+.day-tab.completed{background:rgba(95,209,135,.12);border-color:var(--good);}
+.day-tab.rest{opacity:.55;}
+.set-row{display:grid;grid-template-columns:28px 1fr 1fr 1fr 34px;gap:8px;align-items:center;margin-bottom:8px;}
+.set-row input{text-align:center;padding:8px 4px;}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);padding:12px 18px;border-radius:14px;font-size:13.5px;font-weight:600;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.help-fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--ember);color:#1A0B05;border:none;box-shadow:0 8px 20px rgba(0,0,0,.35);font-size:20px;font-weight:700;cursor:pointer;z-index:45;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);}
+.help-fab:active{transform:scale(0.94);}
+@media(min-width:900px){.help-fab{bottom:24px;}}
+.chat-bubble-user{align-self:flex-end;background:var(--ember);color:#1A0B05;}
+.chat-bubble-assistant{align-self:flex-start;background:var(--surface-2);color:var(--text);}
+.chat-bubble{max-width:85%;padding:10px 13px;border-radius:14px;font-size:13.5px;white-space:pre-wrap;line-height:1.5;}
+@media(min-width:900px){.toast{bottom:24px;}}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-dim);}
+.tabs-row{display:flex;gap:6px;background:var(--surface-2);padding:4px;border-radius:12px;margin-bottom:16px;}
+.tabs-row .tab{flex:1;text-align:center;padding:9px 6px;border-radius:9px;font-size:13px;font-weight:700;color:var(--text-dim);cursor:pointer;}
+.tabs-row .tab.active{background:var(--surface);color:var(--text);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+/* =========================================================================
+   ICONS
+========================================================================= */
+const ICONS = {
+  dashboard:'<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>',
+  workout:'<svg class="icon" viewBox="0 0 24 24"><path d="M4 12h2M18 12h2M6 8v8M18 8v8M8 12h8"/><rect x="2" y="9" width="2" height="6" rx="1"/><rect x="20" y="9" width="2" height="6" rx="1"/></svg>',
+  calendar:'<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  exercises:'<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M6 21c0-3.5 2.7-6 6-6s6 2.5 6 6"/></svg>',
+  stretch:'<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M12 12l-5 6M12 12l5 6M7 9l5 3 5-3"/></svg>',
+  progress:'<svg class="icon" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
+  profile:'<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>',
+  chevron:'<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M9 6l6 6-6 6"/></svg>',
+  close:'<svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  info:'<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg>',
+  check:'<svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5 9-11"/></svg>',
+  sun:'<svg class="icon" viewBox="0 0 24 24" style="width:17px;height:17px"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
+  moon:'<svg class="icon" viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+  plus:'<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>',
+};
+
+/* =========================================================================
+   STORAGE LAYER  (storage.ts equivalent)
+========================================================================= */
+const DATA_VERSION = 1;
+const LS = {
+  PROFILE:'gwp_profile', PLAN:'gwp_plan', HISTORY:'gwp_history',
+  MEASURE:'gwp_measurements', RECOVERY:'gwp_recovery', SETTINGS:'gwp_settings',
+  DRAFT:'gwp_draft', CUSTOM_EX:'gwp_custom_exercises', VERSION:'gwp_version'
+};
+/* BUG FIX (QA audit): every date in this app used to be derived from Date#toISOString(),
+ * which always renders the UTC date, not the viewer's local date. For anyone not in UTC+0,
+ * that silently shifts "today" to yesterday or tomorrow for part of the day (e.g. it's
+ * already tomorrow in UTC once it's evening in most of the Americas' timezones, and it's
+ * still yesterday in UTC for the first few hours of the morning in Asia/Bangkok). These two
+ * helpers are the single source of truth for "local calendar date" going forward. */
+function localISODate(d){
+  d = d || new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function parseLocalDate(str){
+  if(!str) return new Date(NaN);
+  const [y,m,d] = str.split('-').map(Number);
+  return new Date(y, (m||1)-1, d||1);
+}
+function readJSON(key, fallback){
+  try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch(e){ console.error('storage read failed', key, e); return fallback; }
+}
+function writeJSON(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch(e){ console.error('storage write failed', key, e); return false; }
+}
+const Storage = {
+  getUserProfile(){ return readJSON(LS.PROFILE, null); },
+  saveUserProfile(p){ const ok = writeJSON(LS.PROFILE, p); flashSave(ok); Cloud.pushProfile(p); return ok; },
+  updateUserProfile(patch){ const cur = Storage.getUserProfile() || {}; const next = {...cur, ...patch}; return Storage.saveUserProfile(next); },
+
+  getWorkoutPlan(){ return readJSON(LS.PLAN, null); },
+  saveWorkoutPlan(plan){ const ok = writeJSON(LS.PLAN, plan); flashSave(ok); Cloud.pushPlan(plan); return ok; },
+  updateWorkoutPlan(patch){ const cur = Storage.getWorkoutPlan() || {}; return Storage.saveWorkoutPlan({...cur, ...patch}); },
+
+  getWorkoutHistory(){ return readJSON(LS.HISTORY, []); },
+  saveWorkoutSession(session){
+    const hist = Storage.getWorkoutHistory();
+    hist.push(session);
+    const ok = writeJSON(LS.HISTORY, hist); flashSave(ok); Cloud.pushData(Cloud.currentDataBundle()); return ok;
+  },
+  getExerciseHistory(exerciseId){
+    const hist = Storage.getWorkoutHistory();
+    const out = [];
+    hist.forEach(s=>{
+      (s.exercises||[]).forEach(e=>{
+        if(e.exerciseId===exerciseId) out.push({date:s.date, ...e});
+      });
+    });
+    return out.sort((a,b)=> new Date(a.date)-new Date(b.date));
+  },
+
+  getBodyMeasurements(){ return readJSON(LS.MEASURE, []).sort((a,b)=> new Date(a.date)-new Date(b.date)); },
+  saveBodyMeasurement(m){
+    const arr = readJSON(LS.MEASURE, []);
+    arr.push(m);
+    const ok = writeJSON(LS.MEASURE, arr); flashSave(ok); Cloud.pushData(Cloud.currentDataBundle()); return ok;
+  },
+
+  getRecoveryLog(){ return readJSON(LS.RECOVERY, []).sort((a,b)=> new Date(a.date)-new Date(b.date)); },
+  saveRecoveryEntry(r){
+    const arr = readJSON(LS.RECOVERY, []);
+    arr.push(r);
+    const ok = writeJSON(LS.RECOVERY, arr); flashSave(ok); Cloud.pushData(Cloud.currentDataBundle()); return ok;
+  },
+
+  getSettings(){ return readJSON(LS.SETTINGS, {theme:'dark', units:'metric'}); },
+  saveSettings(s){ const ok = writeJSON(LS.SETTINGS, s); flashSave(ok); Cloud.pushSettings(s); return ok; },
+
+  /* BUG FIX: in-progress workout inputs (weight/reps/RPE/notes) used to live only in the DOM
+   * and were never written to storage until "Complete Workout" was clicked. Closing the tab,
+   * refreshing, or just navigating away before finishing silently discarded everything the
+   * person had typed. Every field now autosaves into a per-day draft the moment it changes,
+   * and the workout screen restores that draft on load until the workout is actually
+   * completed (or a new day arrives, at which point a stale draft is ignored). */
+  getWorkoutDraft(dayId){
+    const all = readJSON(LS.DRAFT, {});
+    const d = all[dayId];
+    if(!d) return null;
+    if(d.date !== localISODate()) return null; // stale draft from a previous day — ignore, don't restore
+    return d;
+  },
+  saveWorkoutDraft(dayId, fields){
+    const all = readJSON(LS.DRAFT, {});
+    all[dayId] = {date: localISODate(), fields, savedAt: new Date().toISOString()};
+    const ok = writeJSON(LS.DRAFT, all);
+    flashSave(ok);
+    Cloud.pushDraft(all);
+    return ok;
+  },
+  clearWorkoutDraft(dayId){
+    const all = readJSON(LS.DRAFT, {});
+    delete all[dayId];
+    writeJSON(LS.DRAFT, all);
+    Cloud.pushDraft(all);
+  },
+
+  /* Exercises the person adds themselves (typically via the help assistant) when the
+   * built-in library doesn't have what they want. Kept separate from EXERCISES so a
+   * republish of this app never clobbers someone's custom additions. */
+  getCustomExercises(){ return readJSON(LS.CUSTOM_EX, []); },
+  saveCustomExercise(ex){
+    const arr = readJSON(LS.CUSTOM_EX, []);
+    arr.push(ex);
+    const ok = writeJSON(LS.CUSTOM_EX, arr);
+    flashSave(ok);
+    Cloud.pushCustomExercises(arr);
+    return ok;
+  },
+
+  exportAll(){
+    return {
+      dataVersion: DATA_VERSION,
+      exportedAt: new Date().toISOString(),
+      profile: Storage.getUserProfile(),
+      plan: Storage.getWorkoutPlan(),
+      history: Storage.getWorkoutHistory(),
+      measurements: readJSON(LS.MEASURE, []),
+      recovery: readJSON(LS.RECOVERY, []),
+      settings: Storage.getSettings(),
+      customExercises: readJSON(LS.CUSTOM_EX, []),
+    };
+  },
+  importAll(obj){
+    if(!obj || typeof obj !== 'object') throw new Error('Invalid backup file');
+    if(obj.profile) writeJSON(LS.PROFILE, obj.profile);
+    if(obj.plan) writeJSON(LS.PLAN, obj.plan);
+    if(Array.isArray(obj.history)) writeJSON(LS.HISTORY, obj.history);
+    if(Array.isArray(obj.measurements)) writeJSON(LS.MEASURE, obj.measurements);
+    if(Array.isArray(obj.recovery)) writeJSON(LS.RECOVERY, obj.recovery);
+    if(obj.settings) writeJSON(LS.SETTINGS, obj.settings);
+    if(Array.isArray(obj.customExercises)) writeJSON(LS.CUSTOM_EX, obj.customExercises);
+    writeJSON(LS.VERSION, DATA_VERSION);
+    loadCustomExercisesIntoLibrary();
+    Cloud.pushProfile(Storage.getUserProfile());
+    Cloud.pushPlan(Storage.getWorkoutPlan());
+    Cloud.pushData(Cloud.currentDataBundle());
+    Cloud.pushSettings(Storage.getSettings());
+    Cloud.pushCustomExercises(readJSON(LS.CUSTOM_EX, []));
+    return true;
+  },
+  resetAll(){
+    Object.values(LS).forEach(k=> localStorage.removeItem(k));
+    loadCustomExercisesIntoLibrary();
+    Cloud.resetCloud();
+  }
+};
+
+let saveTimeout;
+function flashSave(ok){
+  const el = document.getElementById('save-indicator');
+  if(!el) return;
+  if(!ok){ el.innerHTML = '<span class="save-dot" style="background:var(--danger)"></span> Unable to save. Try again.'; return; }
+  el.innerHTML = '<span class="save-dot saving"></span> Saving…';
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(()=>{
+    el.innerHTML = '<span class="save-dot"></span> Saved just now';
+    setTimeout(()=>{ if(document.getElementById('save-indicator')) document.getElementById('save-indicator').innerHTML = '<span class="save-dot"></span> Saved'; }, 2500);
+  }, 350);
+}
+
+/* =========================================================================
+   CLOUD SYNC LAYER (db capability)
+   Mirrors local storage to a per-account cloud store so the same signed-in
+   account sees the same data on desktop and mobile. There is no separate
+   username/password system — identity is the person's Claude account, and
+   this artifact stays private to them unless they explicitly share it.
+========================================================================= */
+const Cloud = {
+  db:null, ready:false, unsubs:[],
+  _queues:{}, // BUG FIX (QA audit, Phase 18 autosave race): see push() below.
+  setStatus(text, isError){
+    const el = document.getElementById('cloud-indicator');
+    if(!el) return;
+    el.innerHTML = `<span class="save-dot ${isError?'':''}" style="background:${isError?'var(--danger)':'var(--teal)'}"></span> ${text}`;
+  },
+  async init(){
+    try{ this.db = await claude.use('db'); } catch(e){ this.db = null; }
+    this.ready = true;
+    this.setStatus(this.db ? 'Cloud sync ready' : 'Local only — cloud sync unavailable in this view', !this.db);
+    return this.db;
+  },
+  async pull(){
+    if(!this.db) return null;
+    try{
+      const [profileSnap, planSnap, dataSnap, draftSnap, settingsSnap, customExSnap] = await Promise.all([
+        this.db.doc('app/profile').get(),
+        this.db.doc('app/plan').get(),
+        this.db.doc('app/data').get(),
+        this.db.doc('app/draft').get(),
+        this.db.doc('app/settings').get(),
+        this.db.doc('app/customExercises').get(),
+      ]);
+      return {
+        profile: profileSnap.exists ? profileSnap.data() : null,
+        plan: planSnap.exists ? planSnap.data() : null,
+        data: dataSnap.exists ? dataSnap.data() : null,
+        draft: draftSnap.exists ? draftSnap.data() : null,
+        settings: settingsSnap.exists ? settingsSnap.data() : null,
+        customExercises: customExSnap.exists ? customExSnap.data() : null,
+      };
+    }catch(e){ console.error('cloud pull failed', e); this.setStatus('Cloud sync failed — using local data', true); return null; }
+  },
+  /* BUG FIX (QA audit): pushes used to fire in parallel per docId. If the user changes the
+   * same doc twice in quick succession (e.g. two rapid measurement saves), the two network
+   * requests can resolve out of order — an older push finishing after a newer one would
+   * silently overwrite the newer cloud data with stale data. Each docId now gets its own
+   * promise chain so pushes to that doc are always sent and applied in the order they were
+   * initiated, never overlapping. */
+  async push(docId, body){
+    if(!this.db) return;
+    const prior = this._queues[docId] || Promise.resolve();
+    const run = prior.then(async ()=>{
+      this.setStatus('Syncing to cloud…');
+      try{
+        await this.db.doc('app/'+docId).set(body);
+        this.setStatus('Synced across your devices');
+      }catch(e){
+        console.error('cloud push failed', docId, e);
+        this.setStatus('Cloud sync failed — saved on this device only', true);
+      }
+    });
+    this._queues[docId] = run;
+    return run;
+  },
+  pushProfile(p){ this.push('profile', p); },
+  pushPlan(p){ this.push('plan', p); },
+  pushData(d){ this.push('data', d); },
+  pushDraft(d){ this.push('draft', d); },
+  pushCustomExercises(arr){ this.push('customExercises', arr); },
+  pushSettings(s){ this.push('settings', s); },
+  currentDataBundle(){ return {history: readJSON(LS.HISTORY,[]), measurements: readJSON(LS.MEASURE,[]), recovery: readJSON(LS.RECOVERY,[])}; },
+  subscribe(onChange){
+    if(!this.db) return;
+    // BUG FIX (QA audit, Phase 24 leak): resetting data calls App.init() -> Cloud.init() ->
+    // subscribe() again. Without clearing old listeners first, every reset added a fresh set
+    // of onSnapshot subscriptions on top of the old ones, so cloud updates after a reset were
+    // firing render() multiple times per change.
+    this.unsubscribeAll();
+    this.unsubs.push(this.db.doc('app/profile').onSnapshot(snap=>{ if(snap.exists) onChange('profile', snap.data()); }, e=>console.error(e)));
+    this.unsubs.push(this.db.doc('app/plan').onSnapshot(snap=>{ if(snap.exists) onChange('plan', snap.data()); }, e=>console.error(e)));
+    this.unsubs.push(this.db.doc('app/data').onSnapshot(snap=>{ if(snap.exists) onChange('data', snap.data()); }, e=>console.error(e)));
+    this.unsubs.push(this.db.doc('app/draft').onSnapshot(snap=>{ if(snap.exists) onChange('draft', snap.data()); }, e=>console.error(e)));
+    this.unsubs.push(this.db.doc('app/settings').onSnapshot(snap=>{ if(snap.exists) onChange('settings', snap.data()); }, e=>console.error(e)));
+    this.unsubs.push(this.db.doc('app/customExercises').onSnapshot(snap=>{ if(snap.exists) onChange('customExercises', snap.data()); }, e=>console.error(e)));
+  },
+  unsubscribeAll(){
+    this.unsubs.forEach(u=>{ try{ u && u(); }catch(e){} });
+    this.unsubs = [];
+  },
+  async resetCloud(){
+    if(!this.db) return;
+    try{
+      await Promise.all(['profile','plan','data','draft','settings','customExercises'].map(id=> this.db.doc('app/'+id).delete()));
+    }catch(e){ console.error('cloud reset failed', e); }
+  }
+};
+
+/* =========================================================================
+   EXERCISE LIBRARY DATA
+========================================================================= */
+const EXERCISES = [
+  {id:'benchPress', name:'Barbell Bench Press', category:'Chest', type:'compound', target:'Chest', secondary:'Shoulders, Triceps', equipment:'Barbell', difficulty:'Intermediate',
+   instructions:'Lie on the bench, grip the bar slightly wider than shoulder width, lower it to mid-chest with control, then press up until arms are extended.',
+   mistakes:'Bouncing the bar off the chest or letting the elbows flare out to 90°.', beginnerAlt:'Machine Chest Press', progression:'Add a slow 3-second lowering phase.', regression:'Dumbbell Bench Press'},
+  {id:'dbBenchPress', name:'Dumbbell Bench Press', category:'Chest', type:'compound', target:'Chest', secondary:'Shoulders, Triceps', equipment:'Dumbbells', difficulty:'Beginner',
+   instructions:'Press two dumbbells from chest level to full extension above the chest, keeping wrists stacked over elbows.',
+   mistakes:'Letting the dumbbells drift forward or clanging them together at the top every rep.', beginnerAlt:'Machine Chest Press', progression:'Barbell Bench Press', regression:'Machine Chest Press'},
+  {id:'inclineDbPress', name:'Incline Dumbbell Press', category:'Chest', type:'compound', target:'Upper chest', secondary:'Shoulders, Triceps', equipment:'Dumbbells', difficulty:'Intermediate',
+   instructions:'On a 30–45° incline bench, press dumbbells up and slightly together above the upper chest.',
+   mistakes:'Setting the incline too steep, which shifts the work to the shoulders.', beginnerAlt:'Machine Incline Press', progression:'Increase incline angle slightly', regression:'Flat Dumbbell Press'},
+  {id:'machineChestPress', name:'Machine Chest Press', category:'Chest', type:'compound', target:'Chest', secondary:'Shoulders, Triceps', equipment:'Machines', difficulty:'Beginner',
+   instructions:'Sit tall, grip the handles at chest height, and press forward until arms extend without locking out hard.',
+   mistakes:'Shrugging the shoulders up toward the ears during the press.', beginnerAlt:'—', progression:'Dumbbell Bench Press', regression:'Reduce range of motion slightly'},
+  {id:'cableFly', name:'Cable Fly', category:'Chest', type:'isolation', target:'Chest', secondary:'Front shoulders', equipment:'Full gym', difficulty:'Intermediate',
+   instructions:'With a slight forward lean, bring the handles together in front of the chest in a wide arcing motion.',
+   mistakes:'Using so much weight that the shoulders round forward.', beginnerAlt:'Machine Chest Fly', progression:'Pause 1s at full contraction', regression:'Standing single-arm fly with light band'},
+  {id:'latPulldown', name:'Lat Pulldown', category:'Back', type:'compound', target:'Lats', secondary:'Biceps, Mid-back', equipment:'Machines', difficulty:'Beginner',
+   instructions:'Pull the bar down toward the upper chest by driving the elbows down and back, then control it back up.',
+   mistakes:'Leaning back excessively and turning it into a rowing motion.', beginnerAlt:'Assisted Pull-up Machine', progression:'Pull-up', regression:'Increase machine assistance / lighten load'},
+  {id:'pullup', name:'Pull-up', category:'Back', type:'compound', target:'Lats', secondary:'Biceps, Mid-back', equipment:'Full gym', difficulty:'Advanced',
+   instructions:'Hang from the bar, pull your chin above the bar by driving elbows down, then lower under control.',
+   mistakes:'Using momentum or kipping instead of controlled strength.', beginnerAlt:'Lat Pulldown', progression:'Add a weighted vest', regression:'Band-Assisted Pull-up'},
+  {id:'seatedRow', name:'Seated Cable Row', category:'Back', type:'compound', target:'Mid-back', secondary:'Lats, Biceps', equipment:'Full gym', difficulty:'Beginner',
+   instructions:'Sit tall, pull the handle to the torso while squeezing the shoulder blades together, then extend arms with control.',
+   mistakes:'Rounding the lower back or using excessive body rock.', beginnerAlt:'Chest-Supported Row', progression:'Barbell Row', regression:'Chest-Supported Row'},
+  {id:'barbellRow', name:'Barbell Row', category:'Back', type:'compound', target:'Mid-back', secondary:'Lats, Biceps, Lower back', equipment:'Barbell', difficulty:'Advanced',
+   instructions:'Hinge at the hips with a flat back, pull the bar toward the lower ribs, then lower under control.',
+   mistakes:'Rounding the spine or standing too upright, which loses tension on the back.', beginnerAlt:'Chest-Supported Row', progression:'Add a pause at the top', regression:'Chest-Supported Row'},
+  {id:'chestSupportedRow', name:'Chest-Supported Row', category:'Back', type:'compound', target:'Mid-back', secondary:'Lats, Biceps', equipment:'Machines', difficulty:'Beginner',
+   instructions:'Lie chest-down on the pad, row the handles toward your torso, squeezing the shoulder blades.',
+   mistakes:'Yanking the weight up using momentum instead of the back muscles.', beginnerAlt:'—', progression:'Barbell Row', regression:'Lighten load, focus on range of motion'},
+  {id:'ohp', name:'Overhead Press', category:'Shoulders', type:'compound', target:'Shoulders', secondary:'Triceps, Upper chest', equipment:'Barbell', difficulty:'Advanced',
+   instructions:'Press the bar from shoulder height straight overhead, keeping the ribcage down and core braced.',
+   mistakes:'Arching the lower back excessively to help the bar up.', beginnerAlt:'Dumbbell Shoulder Press', progression:'Add a 2-second pause at the top', regression:'Dumbbell Shoulder Press'},
+  {id:'dbShoulderPress', name:'Dumbbell Shoulder Press', category:'Shoulders', type:'compound', target:'Shoulders', secondary:'Triceps', equipment:'Dumbbells', difficulty:'Beginner',
+   instructions:'Press dumbbells from shoulder height straight overhead without arching the back.',
+   mistakes:'Flaring elbows too wide or leaning back to press.', beginnerAlt:'Machine Shoulder Press', progression:'Overhead Press', regression:'Machine Shoulder Press'},
+  {id:'lateralRaise', name:'Lateral Raise', category:'Shoulders', type:'isolation', target:'Side shoulders', secondary:'—', equipment:'Dumbbells', difficulty:'Beginner',
+   instructions:'Raise the dumbbells out to the sides to about shoulder height with a slight elbow bend, then lower slowly.',
+   mistakes:'Swinging the weight up using momentum from the hips.', beginnerAlt:'Cable Lateral Raise', progression:'Slow 3-second lowering', regression:'Lighter dumbbells, seated version'},
+  {id:'rearDeltFly', name:'Rear Delt Fly', category:'Shoulders', type:'isolation', target:'Rear shoulders', secondary:'Upper back', equipment:'Dumbbells', difficulty:'Beginner',
+   instructions:'Hinge forward slightly and raise the dumbbells out to the sides, squeezing the rear shoulders.',
+   mistakes:'Using the traps to shrug the weight up instead of the rear delts.', beginnerAlt:'Machine Reverse Fly', progression:'Pause at the top of each rep', regression:'Machine Reverse Fly'},
+  {id:'barbellCurl', name:'Barbell Curl', category:'Biceps', type:'isolation', target:'Biceps', secondary:'Forearms', equipment:'Barbell', difficulty:'Beginner',
+   instructions:'Curl the bar up by bending the elbows while keeping the upper arms still, then lower with control.',
+   mistakes:'Swinging the hips or leaning back to help the bar up.', beginnerAlt:'Dumbbell Curl', progression:'EZ-Bar Curl with a pause', regression:'Dumbbell Curl'},
+  {id:'dbCurl', name:'Dumbbell Curl', category:'Biceps', type:'isolation', target:'Biceps', secondary:'Forearms', equipment:'Dumbbells', difficulty:'Beginner',
+   instructions:'Curl each dumbbell up while keeping elbows tucked to your sides, then lower under control.',
+   mistakes:'Letting the elbows drift forward as the weight gets heavier.', beginnerAlt:'Cable Curl', progression:'Alternate with a 1-second squeeze at the top', regression:'Cable Curl with light load'},
+  {id:'cableCurl', name:'Cable Curl', category:'Biceps', type:'isolation', target:'Biceps', secondary:'Forearms', equipment:'Full gym', difficulty:'Beginner',
+   instructions:'Using a straight or EZ bar attachment, curl the handle up while keeping elbows stationary.',
+   mistakes:'Leaning back to use body momentum.', beginnerAlt:'—', progression:'Dumbbell Curl', regression:'Reduce cable weight'},
+  {id:'tricepPushdown', name:'Triceps Pushdown', category:'Triceps', type:'isolation', target:'Triceps', secondary:'—', equipment:'Full gym', difficulty:'Beginner',
+   instructions:'Keeping elbows pinned to your sides, extend the cable attachment down until arms are straight.',
+   mistakes:'Letting the elbows drift away from the body during the press down.', beginnerAlt:'—', progression:'Overhead Triceps Extension', regression:'Reduce weight, focus on elbow position'},
+  {id:'overheadTricepExt', name:'Overhead Triceps Extension', category:'Triceps', type:'isolation', target:'Triceps', secondary:'—', equipment:'Dumbbells', difficulty:'Intermediate',
+   instructions:'Holding a dumbbell overhead with both hands, lower it behind the head, then extend back up.',
+   mistakes:'Flaring the elbows out wide instead of keeping them close to the head.', beginnerAlt:'Triceps Pushdown', progression:'Single-arm version', regression:'Triceps Pushdown'},
+  {id:'squat', name:'Barbell Squat', category:'Quadriceps', type:'compound', target:'Quadriceps', secondary:'Glutes, Hamstrings, Core', equipment:'Barbell', difficulty:'Advanced',
+   instructions:'With the bar on your upper back, sit down and back until thighs are roughly parallel to the floor, then drive back up.',
+   mistakes:'Letting the knees cave inward or the heels lift off the floor.', beginnerAlt:'Goblet Squat', progression:'Front Squat', regression:'Goblet Squat'},
+  {id:'goblet', name:'Goblet Squat', category:'Quadriceps', type:'compound', target:'Quadriceps', secondary:'Glutes, Core', equipment:'Dumbbells', difficulty:'Beginner',
+   instructions:'Hold a dumbbell at chest height, squat down between your knees, then stand back up.',
+   mistakes:'Rounding the upper back while descending.', beginnerAlt:'Leg Press', progression:'Barbell Squat', regression:'Bodyweight Squat'},
+  {id:'legPress', name:'Leg Press', category:'Quadriceps', type:'compound', target:'Quadriceps', secondary:'Glutes, Hamstrings', equipment:'Machines', difficulty:'Beginner',
+   instructions:'Place feet shoulder width on the platform, lower the sled with control, then press through the heels.',
+   mistakes:'Letting the lower back round off the pad at the bottom.', beginnerAlt:'—', progression:'Goblet Squat', regression:'Reduce range of motion'},
+  {id:'legExtension', name:'Leg Extension', category:'Quadriceps', type:'isolation', target:'Quadriceps', secondary:'—', equipment:'Machines', difficulty:'Beginner',
+   instructions:'Extend the knees against the pad until legs are straight, then lower with control.',
+   mistakes:'Using momentum by kicking the weight up quickly.', beginnerAlt:'—', progression:'Add a 2-second squeeze at the top', regression:'Reduce weight'},
+  {id:'rdl', name:'Romanian Deadlift', category:'Hamstrings', type:'compound', target:'Hamstrings', secondary:'Glutes, Lower back', equipment:'Barbell', difficulty:'Intermediate',
+   instructions:'With a slight knee bend, hinge at the hips and lower the bar along your legs, then drive the hips forward to stand.',
+   mistakes:'Rounding the lower back or bending the knees too much, turning it into a squat.', beginnerAlt:'Dumbbell RDL', progression:'Single-leg RDL', regression:'Dumbbell RDL'},
+  {id:'legCurl', name:'Leg Curl', category:'Hamstrings', type:'isolation', target:'Hamstrings', secondary:'—', equipment:'Machines', difficulty:'Beginner',
+   instructions:'Curl the pad toward your glutes by bending the knees, then extend back with control.',
+   mistakes:'Letting the hips lift off the pad during the curl.', beginnerAlt:'—', progression:'Add a pause at peak contraction', regression:'Reduce weight'},
+  {id:'hipThrust', name:'Hip Thrust', category:'Glutes', type:'compound', target:'Glutes', secondary:'Hamstrings', equipment:'Barbell', difficulty:'Intermediate',
+   instructions:'With upper back on a bench and bar over the hips, drive through the heels to lift the hips until the torso is level.',
+   mistakes:'Overextending the lower back at the top instead of squeezing the glutes.', beginnerAlt:'Glute Bridge', progression:'Single-leg Hip Thrust', regression:'Bodyweight Glute Bridge'},
+  {id:'calfRaise', name:'Calf Raise', category:'Calves', type:'isolation', target:'Calves', secondary:'—', equipment:'Machines', difficulty:'Beginner',
+   instructions:'Rise up onto the balls of your feet as high as possible, then lower slowly below the starting position.',
+   mistakes:'Bouncing quickly instead of controlling the full range of motion.', beginnerAlt:'—', progression:'Single-leg Calf Raise', regression:'Reduce range of motion'},
+  {id:'plank', name:'Plank', category:'Core', type:'isolation', target:'Core', secondary:'Shoulders', equipment:'Home equipment', difficulty:'Beginner',
+   instructions:'Hold a straight-body position on forearms and toes, keeping hips level and core braced.',
+   mistakes:'Letting the hips sag down or pike up too high.', beginnerAlt:'Knee Plank', progression:'Add a slow arm or leg lift', regression:'Knee Plank'},
+  {id:'cableCrunch', name:'Cable Crunch', category:'Core', type:'isolation', target:'Core', secondary:'—', equipment:'Full gym', difficulty:'Intermediate',
+   instructions:'Kneel below the cable, curl the torso down by contracting the abs, then return with control.',
+   mistakes:'Pulling with the arms instead of curling with the abs.', beginnerAlt:'Bodyweight Crunch', progression:'Increase cable weight slightly', regression:'Bodyweight Crunch'},
+  {id:'hangingKneeRaise', name:'Hanging Knee Raise', category:'Core', type:'isolation', target:'Lower abs', secondary:'Hip flexors', equipment:'Full gym', difficulty:'Intermediate',
+   instructions:'Hang from the bar and raise the knees toward the chest without swinging, then lower with control.',
+   mistakes:'Using momentum by swinging the whole body.', beginnerAlt:'Lying Leg Raise', progression:'Straight-leg raise', regression:'Lying Leg Raise'},
+  {id:'deadBug', name:'Dead Bug', category:'Core', type:'isolation', target:'Core', secondary:'—', equipment:'Home equipment', difficulty:'Beginner',
+   instructions:'Lying on your back, slowly extend opposite arm and leg while keeping the low back pressed to the floor.',
+   mistakes:'Letting the lower back arch off the floor.', beginnerAlt:'—', progression:'Add a light weight in the hands', regression:'Smaller range of motion'},
+];
+const CATEGORIES = ['Chest','Back','Shoulders','Biceps','Triceps','Quadriceps','Hamstrings','Glutes','Calves','Core'];
+
+/* =========================================================================
+   EXERCISE VISUAL GUIDE — movement patterns, muscle-diagram data, enrichment
+   No external images are used anywhere in this app (a published page can't
+   reliably load remote photos, and unrelated stock photos would be worse
+   than nothing). Every exercise instead gets a generated, labeled body
+   diagram highlighting the exact muscles it trains, plus a movement
+   direction cue. `image` is left as an empty placeholder field, structured
+   so a real photo/GIF path (e.g. "/assets/exercises/bench-press.webp") can
+   be dropped in later without changing any other code — see IMG() below.
+========================================================================= */
+const CATEGORY_REGION = {
+  Chest:'Upper', Back:'Upper', Shoulders:'Upper', Biceps:'Upper', Triceps:'Upper',
+  Quadriceps:'Lower', Hamstrings:'Lower', Glutes:'Lower', Calves:'Lower', Core:'Core'
+};
+const BACK_VIEW_CATEGORIES = new Set(['Back','Hamstrings','Glutes','Calves']);
+const EXERCISE_PATTERNS = {
+  benchPress:'horizontal-press', dbBenchPress:'horizontal-press', inclineDbPress:'incline-press', machineChestPress:'horizontal-press', cableFly:'fly',
+  latPulldown:'vertical-pull', pullup:'vertical-pull', seatedRow:'horizontal-pull', barbellRow:'horizontal-pull', chestSupportedRow:'horizontal-pull',
+  ohp:'vertical-press', dbShoulderPress:'vertical-press', lateralRaise:'lateral-raise', rearDeltFly:'fly',
+  barbellCurl:'curl', dbCurl:'curl', cableCurl:'curl', tricepPushdown:'extension', overheadTricepExt:'extension',
+  squat:'squat', goblet:'squat', legPress:'squat', legExtension:'extension', rdl:'hinge', legCurl:'leg-curl', hipThrust:'hinge', calfRaise:'raise',
+  plank:'isometric', cableCrunch:'crunch', hangingKneeRaise:'raise-leg', deadBug:'isometric'
+};
+const PATTERNS = {
+  'horizontal-press': {direction:'Push away from the chest', steps:n=>[`Set up on the bench with a stable base — feet planted, shoulder blades pulled together.`,`Lower the weight under control to chest level, elbows at roughly 45°.`,`Press back up to full extension without locking the elbows hard.`], breathing:'Inhale on the way down, exhale forcefully as you press up.', cues:['Feet flat on the floor','Shoulder blades pulled together and down','Control the lowering phase','Press in a straight line, not toward the face']},
+  'incline-press': {direction:'Push up and slightly back', steps:n=>[`Set the bench to a 30–45° incline and plant your feet.`,`Lower the weight to the upper chest with control.`,`Press up and slightly together until arms extend.`], breathing:'Inhale as you lower, exhale as you press.', cues:['Keep the incline moderate, not steep','Avoid flaring the elbows past 90°','Drive through a full range of motion','Keep the ribcage down, not arched']},
+  'vertical-press': {direction:'Push straight overhead', steps:n=>[`Start with the weight at shoulder height, core braced.`,`Press straight up until arms are fully extended overhead.`,`Lower back to shoulder height under control.`], breathing:'Exhale as you press up, inhale as you lower.', cues:['Keep ribcage stacked over the pelvis','Avoid excessive lower-back arch','Press in a straight vertical line','Finish with biceps near the ears']},
+  'fly': {direction:'Arc the arms toward each other', steps:n=>[`Set up with a slight bend in the elbows and arms open wide.`,`Bring the hands together in a wide arcing motion.`,`Return slowly to the starting stretch position.`], breathing:'Inhale as the arms open, exhale as they come together.', cues:['Keep a soft, fixed bend in the elbows','Lead with the hands, not the shoulders','Control the stretch at the bottom','Avoid using momentum']},
+  'vertical-pull': {direction:'Pull downward toward the torso', steps:n=>[`Grip the bar/handle wider than shoulder width and set your torso.`,`Pull the elbows down and back until the bar reaches the upper chest.`,`Extend back up under control without shrugging.`], breathing:'Exhale as you pull down, inhale as you return.', cues:['Drive elbows down and back, not just hands','Keep the chest tall','Avoid swinging the torso','Control the return — don\u2019t let it yank you up']},
+  'horizontal-pull': {direction:'Pull straight back toward the torso', steps:n=>[`Set up with a flat back and arms extended toward the weight.`,`Pull the handle toward your torso, squeezing the shoulder blades.`,`Extend the arms back out under control.`], breathing:'Exhale as you pull, inhale as you extend.', cues:['Keep the spine neutral, not rounded','Squeeze the shoulder blades together at the finish','Avoid using body momentum to heave the weight','Control the stretch at full extension']},
+  'lateral-raise': {direction:'Raise out to the sides', steps:n=>[`Stand tall holding light weights at your sides.`,`Raise the arms out to the sides to about shoulder height.`,`Lower slowly back to the starting position.`], breathing:'Exhale as you raise, inhale as you lower.', cues:['Lead with the elbows, not the hands','Keep a slight bend in the elbows','Avoid shrugging the traps','Control the lowering phase — don\u2019t drop it']},
+  'curl': {direction:'Curl at the elbow', steps:n=>[`Stand or sit with the weight at arm's length, elbows near your sides.`,`Curl the weight up by bending the elbow, keeping the upper arm still.`,`Lower back down under control to full extension.`], breathing:'Exhale as you curl up, inhale as you lower.', cues:['Keep elbows pinned to your sides','Avoid swinging the hips or leaning back','Squeeze at the top of the curl','Control the lowering — don\u2019t let it drop']},
+  'extension': {direction:'Extend and straighten the limb', steps:n=>[`Set up with the joint bent and the working muscle pre-stretched.`,`Extend the limb fully by contracting the target muscle.`,`Return slowly to the starting bent position.`], breathing:'Exhale as you extend, inhale as you return.', cues:['Keep the movement isolated to the joint','Avoid using momentum','Pause briefly at full extension','Control the return every rep']},
+  'squat': {direction:'Bend the knees and hips downward', steps:n=>[`Set your feet roughly shoulder width, brace your core.`,`Sit down and back, keeping the chest tall, until thighs approach parallel.`,`Drive back up through the heels to standing.`], breathing:'Inhale before descending, exhale as you drive up.', cues:['Keep knees tracking over the toes, not caving in','Keep weight through the mid-foot and heel','Keep a neutral spine, avoid rounding','Only go as deep as control allows']},
+  'hinge': {direction:'Bend forward at the hips', steps:n=>[`Stand tall holding the weight close to your legs.`,`Push the hips back while lowering the weight, keeping the back flat.`,`Drive the hips forward to return to standing.`], breathing:'Inhale as you hinge down, exhale as you stand up.', cues:['Keep a soft bend in the knees, not a squat','Keep the bar/weight close to the legs','Keep the spine neutral throughout','Finish by squeezing the glutes, not overextending the back']},
+  'leg-curl': {direction:'Curl the lower leg toward the glutes', steps:n=>[`Lie or sit with the pad positioned at the ankle.`,`Curl the pad toward the glutes by bending the knee.`,`Extend back out under control.`], breathing:'Exhale as you curl, inhale as you extend.', cues:['Keep the hips pressed to the pad','Avoid using momentum','Pause briefly at peak contraction','Control the return']},
+  'raise': {direction:'Rise up and lower under control', steps:n=>[`Set up with the target joint at its normal resting position.`,`Rise up through the working muscle to full contraction.`,`Lower slowly below the starting position for a full stretch.`], breathing:'Exhale as you rise, inhale as you lower.', cues:['Control the full range of motion','Avoid bouncing at the bottom','Pause briefly at the top','Keep the rest of the body stable']},
+  'isometric': {direction:'Hold a fixed, stable position', steps:n=>[`Get into the braced starting position with a neutral spine.`,`Hold the position, breathing steadily, without sagging or piking.`,`Release slowly and rest before repeating.`], breathing:'Breathe steadily throughout — never hold your breath.', cues:['Keep hips level, not sagging or piking','Brace the core like bracing for a light punch','Keep the neck neutral','Stop before form breaks down']},
+  'crunch': {direction:'Curl the torso inward', steps:n=>[`Set up with the target muscle pre-stretched.`,`Curl the torso inward by contracting the abs, not pulling with the arms/hips.`,`Return slowly to the starting stretch.`], breathing:'Exhale as you curl in, inhale as you return.', cues:['Curl with the abs, not the arms','Keep the movement slow and controlled','Avoid yanking on the neck','Focus on the squeeze at the top']},
+  'raise-leg': {direction:'Raise the legs toward the torso', steps:n=>[`Hang or lie with legs extended and core braced.`,`Raise the knees/legs toward the chest without swinging.`,`Lower back down under control.`], breathing:'Exhale as you raise, inhale as you lower.', cues:['Avoid swinging the body for momentum','Keep the movement slow and controlled','Posteriorly tilt the pelvis at the top','Lower only as far as control allows']},
+};
+function enrichExercise(e){
+  e.pattern = e.pattern || EXERCISE_PATTERNS[e.id] || 'isometric';
+  e.region = e.region || CATEGORY_REGION[e.category] || 'Upper';
+  e.primaryMuscles = e.target.split(',').map(s=>s.trim());
+  e.secondaryMuscles = (!e.secondary || e.secondary === '—') ? [] : e.secondary.split(',').map(s=>s.trim());
+  e.view = e.view || ((BACK_VIEW_CATEGORIES.has(e.category) || e.id === 'rearDeltFly') ? 'back' : 'front');
+  e.image = e.image || ''; // reserved: set to a real asset path/URL to override the generated diagram
+  e.commonMistakesList = e.commonMistakesList || [e.mistakes, 'Using excessive weight before technique is consistent', 'Rushing the tempo instead of controlling both directions'];
+  return e;
+}
+EXERCISES.forEach(enrichExercise);
+/** Merges the person's own saved custom exercises (usually added via the help assistant)
+ * into the working EXERCISES array, so every existing search/filter/picker just sees them
+ * as normal exercises. Safe to call repeatedly — it clears out any previously-merged custom
+ * entries first, so re-running after an import/reset/cloud update never duplicates rows. */
+function loadCustomExercisesIntoLibrary(){
+  for(let i=EXERCISES.length-1; i>=0; i--){ if(EXERCISES[i].custom) EXERCISES.splice(i,1); }
+  Storage.getCustomExercises().forEach(ex=>{
+    ex.custom = true;
+    enrichExercise(ex);
+    EXERCISES.push(ex);
+  });
+}
+
+/* ---- Body-diagram SVG generator (used as the visual for every exercise, stretch, and warm-up) ---- */
+const BODY_ZONES = {
+  front: [
+    {id:'shoulders', cx:22, cy:34, r:8}, {id:'shoulders', cx:78, cy:34, r:8},
+    {id:'chest', x:32, y:30, w:36, h:22, rx:6},
+    {id:'biceps', x:12, y:40, w:10, h:26, rx:4}, {id:'biceps', x:78, y:40, w:10, h:26, rx:4},
+    {id:'forearms', x:12, y:68, w:9, h:22, rx:4}, {id:'forearms', x:79, y:68, w:9, h:22, rx:4},
+    {id:'core', x:36, y:54, w:28, h:26, rx:6},
+    {id:'quadriceps', x:33, y:96, w:14, h:36, rx:5}, {id:'quadriceps', x:53, y:96, w:14, h:36, rx:5},
+    {id:'calves', x:34, y:136, w:12, h:28, rx:4}, {id:'calves', x:54, y:136, w:12, h:28, rx:4},
+  ],
+  back: [
+    {id:'shoulders', cx:22, cy:34, r:8}, {id:'shoulders', cx:78, cy:34, r:8},
+    {id:'back', x:30, y:30, w:40, h:26, rx:8},
+    {id:'triceps', x:12, y:40, w:10, h:26, rx:4}, {id:'triceps', x:78, y:40, w:10, h:26, rx:4},
+    {id:'lowerback', x:36, y:58, w:28, h:14, rx:5},
+    {id:'glutes', x:33, y:94, w:34, h:16, rx:8},
+    {id:'hamstrings', x:33, y:112, w:14, h:26, rx:5}, {id:'hamstrings', x:53, y:112, w:14, h:26, rx:5},
+    {id:'calves', x:34, y:140, w:12, h:26, rx:4}, {id:'calves', x:54, y:140, w:12, h:26, rx:4},
+  ]
+};
+function muscleZoneKey(name){
+  const s = (name||'').toLowerCase();
+  if(s.includes('chest')) return 'chest';
+  if(s.includes('lat') || s.includes('mid-back') || s.includes('back')) return s.includes('lower back')?'lowerback':'back';
+  if(s.includes('rear') || s.includes('shoulder') || s.includes('delt')) return 'shoulders';
+  if(s.includes('bicep')) return 'biceps';
+  if(s.includes('tricep')) return 'triceps';
+  if(s.includes('forearm')) return 'forearms';
+  if(s.includes('quad')) return 'quadriceps';
+  if(s.includes('hamstring')) return 'hamstrings';
+  if(s.includes('glute')) return 'glutes';
+  if(s.includes('calf') || s.includes('calves')) return 'calves';
+  if(s.includes('core') || s.includes('ab') || s.includes('hip flexor')) return 'core';
+  if(s.includes('hip')) return 'glutes';
+  return null;
+}
+function bodyDiagramSVG(view, primaryList, secondaryList, size){
+  size = size || 120;
+  const primaryKeys = new Set((primaryList||[]).map(muscleZoneKey).filter(Boolean));
+  const secondaryKeys = new Set((secondaryList||[]).map(muscleZoneKey).filter(Boolean));
+  const css = getComputedStyle(document.documentElement);
+  const ember = css.getPropertyValue('--ember').trim() || '#FF6A3D';
+  const teal = css.getPropertyValue('--teal').trim() || '#33D6C0';
+  const muted = css.getPropertyValue('--border').trim() || '#2A2F3A';
+  const outline = css.getPropertyValue('--text-faint').trim() || '#5C6270';
+  const zones = BODY_ZONES[view] || BODY_ZONES.front;
+  const shapes = zones.map(z=>{
+    const fill = primaryKeys.has(z.id) ? ember : (secondaryKeys.has(z.id) ? teal : muted);
+    const opacity = primaryKeys.has(z.id) ? 1 : (secondaryKeys.has(z.id) ? 0.8 : 0.55);
+    if(z.r) return `<circle cx="${z.cx}" cy="${z.cy}" r="${z.r}" fill="${fill}" opacity="${opacity}"/>`;
+    return `<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="${z.rx}" fill="${fill}" opacity="${opacity}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 100 175" width="${size}" height="${size*1.6}" style="max-width:100%;">
+    <circle cx="50" cy="16" r="12" fill="none" stroke="${outline}" stroke-width="1.5"/>
+    <rect x="30" y="28" width="40" height="30" rx="10" fill="none" stroke="${outline}" stroke-width="1.2"/>
+    <rect x="32" y="92" width="36" height="42" rx="8" fill="none" stroke="${outline}" stroke-width="1.2"/>
+    ${shapes}
+  </svg>`;
+}
+/* BUG FIX (QA audit): the previous fallback tried to inline a full multi-line SVG string
+ * literal (with unescaped newlines and double quotes) directly inside a single-quoted
+ * inline onerror="" attribute. That's a JS syntax error the moment it actually runs — the
+ * fallback would silently fail and the viewer would be left with a broken-image icon,
+ * exactly what a real image fallback must never do. Currently no exercise has ex.image set,
+ * so this path was never exercised, but it's the documented escape hatch for adding real
+ * photos later, so it needs to actually work. Using a small keyed registry avoids ever
+ * putting untrusted/complex string content inside an HTML attribute at all.
+ */
+window.__imgFallbacks = window.__imgFallbacks || {};
+function imgFallback(el, key){
+  const svg = window.__imgFallbacks[key];
+  if(svg) el.outerHTML = svg;
+}
+function IMG(ex, size){
+  // Forward-compatible: if a real image path/URL is ever set on the exercise, use it with a
+  // graceful fallback to the generated diagram if it fails to load. Otherwise, use the diagram directly.
+  if(ex.image){
+    const key = ex.id + '_' + size;
+    window.__imgFallbacks[key] = bodyDiagramSVG(ex.view, ex.primaryMuscles, ex.secondaryMuscles, size);
+    return `<span style="display:inline-block;width:${size}px;height:${size*1.6}px;">
+      <img src="${escapeHtml(ex.image)}" alt="${escapeHtml(ex.name)}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"
+        loading="lazy" onerror="imgFallback(this,'${key}')">
+    </span>`;
+  }
+  return bodyDiagramSVG(ex.view, ex.primaryMuscles, ex.secondaryMuscles, size);
+}
+
+/* =========================================================================
+   STRETCHING DATA
+========================================================================= */
+const DYNAMIC_WARMUPS = [
+  {name:'Arm Circles', how:'Extend arms out to the sides and make slow, controlled circles, small at first and gradually larger.', reps:'10 reps each direction', view:'front', primary:['Shoulders']},
+  {name:'Shoulder Rotations', how:'Roll the shoulders forward then backward in a slow, controlled motion.', reps:'10 reps each direction', view:'back', primary:['Shoulders']},
+  {name:'Band Pull-Aparts', how:'Hold a light band at shoulder height and pull it apart by squeezing the shoulder blades together.', reps:'12–15 reps', view:'back', primary:['Back'], secondary:['Shoulders']},
+  {name:'Leg Swings', how:'Holding a wall for balance, swing one leg forward and back in a controlled arc.', reps:'10 reps per leg', view:'front', primary:['Hamstrings','Quadriceps']},
+  {name:'Hip Circles', how:'Hands on hips, draw slow, large circles with your hips in both directions.', reps:'8 reps each direction', view:'back', primary:['Glutes']},
+  {name:'Cat-Cow', how:'On hands and knees, alternate between arching the back up (cat) and dipping it down (cow) slowly.', reps:'8–10 slow cycles', view:'back', primary:['Back'], secondary:['Core']},
+  {name:'Bodyweight Squats', how:'Perform slow, controlled squats through a comfortable range of motion.', reps:'10–12 reps', view:'front', primary:['Quadriceps'], secondary:['Glutes']},
+  {name:'Walking Lunges', how:'Step forward into a lunge, alternating legs as you move across the room.', reps:'8–10 steps per leg', view:'front', primary:['Quadriceps','Glutes']},
+  {name:'Ankle Mobility', how:'Rock forward and back over a bent front knee, keeping the heel down, to mobilize the ankle.', reps:'10 reps per side', view:'front', primary:['Calves']},
+];
+const STATIC_STRETCHES = [
+  {name:'Doorway Chest Stretch', target:'Chest', how:'Place your forearm on a doorframe at shoulder height and gently rotate your body away from it.', duration:'20–30 sec', sets:'2', breathing:'Breathe slowly and deeply; exhale as you ease deeper.', mistakes:'Pushing until it hurts instead of a mild pulling sensation.', stop:'Stop if you feel sharp pain, numbness, or tingling down the arm.', view:'front', primary:['Chest']},
+  {name:'Lat Stretch', target:'Back', how:'Hold onto a sturdy post overhead, then sit your hips back and away to feel a stretch along the side of your back.', duration:'20–30 sec', sets:'2', breathing:'Long exhales while easing into the stretch.', mistakes:'Rounding hard through the lower back.', stop:'Stop if you feel sharp pain in the shoulder or spine.', view:'back', primary:['Back']},
+  {name:'Cross-Body Shoulder Stretch', target:'Shoulders', how:'Bring one arm across your chest and gently pull it closer with the opposite hand.', duration:'20–30 sec', sets:'2', breathing:'Steady, relaxed breathing throughout.', mistakes:'Yanking the arm instead of easing into it.', stop:'Stop if you feel pinching in the shoulder joint.', view:'back', primary:['Shoulders']},
+  {name:'Standing Quad Stretch', target:'Quadriceps', how:'Hold your ankle behind you, keeping knees close together, and gently pull the heel toward your glutes.', duration:'20–30 sec', sets:'2', breathing:'Exhale as you deepen the stretch slightly.', mistakes:'Arching the lower back to get a bigger stretch.', stop:'Stop if you feel sharp pain in the knee.', view:'front', primary:['Quadriceps']},
+  {name:'Seated Hamstring Stretch', target:'Hamstrings', how:'Sit with one leg extended, hinge forward from the hips with a flat back, reaching toward your foot.', duration:'20–30 sec', sets:'2', breathing:'Slow exhale as you fold forward.', mistakes:'Rounding the back sharply instead of hinging at the hips.', stop:'Stop if you feel sharp pain behind the knee.', view:'back', primary:['Hamstrings']},
+  {name:'Hip Flexor Stretch', target:'Hips', how:'From a half-kneeling lunge position, gently push your hips forward while keeping your torso upright.', duration:'20–30 sec', sets:'2', breathing:'Deep breaths, relaxing the front hip on each exhale.', mistakes:'Overarching the lower back instead of tucking the pelvis slightly.', stop:'Stop if you feel pain in the front of the hip joint.', view:'front', primary:['Core']},
+  {name:'Figure-4 Stretch', target:'Glutes', how:'Lying on your back, cross one ankle over the opposite knee and gently pull the thigh toward your chest.', duration:'20–30 sec', sets:'2', breathing:'Slow breathing, easing deeper on each exhale.', mistakes:'Pulling hard on the leg instead of a gentle draw.', stop:'Stop if you feel pain in the hip or lower back.', view:'back', primary:['Glutes']},
+  {name:'Standing Calf Stretch', target:'Calves', how:'Step one foot back, keep the back heel down and back knee straight, and lean gently into a wall.', duration:'20–30 sec', sets:'2', breathing:'Steady breathing, no need to hold your breath.', mistakes:'Bouncing in and out of the stretch.', stop:'Stop if you feel cramping or sharp pain in the calf.', view:'back', primary:['Calves']},
+];
+
+/* =========================================================================
+   WORKOUT TEMPLATES  — one exercise rotation per training STYLE.
+   Previously templates were keyed only by day-count, so picking a different
+   "Preferred training style" for the same number of days changed nothing.
+   Now each style owns its own rotation, and generatePlan() cycles through
+   that rotation to fill however many days are actually scheduled.
+========================================================================= */
+const STYLE_ROTATIONS = {
+  'Full Body': [
+    {name:'Full Body A', exercises:['goblet','benchPress','seatedRow','dbShoulderPress','dbCurl','plank']},
+    {name:'Full Body B', exercises:['legPress','inclineDbPress','latPulldown','lateralRaise','tricepPushdown','calfRaise']},
+    {name:'Full Body C', exercises:['rdl','machineChestPress','chestSupportedRow','hipThrust','cableCurl','cableCrunch']},
+  ],
+  'Upper/Lower': [
+    {name:'Upper A', exercises:['benchPress','seatedRow','dbShoulderPress','latPulldown','dbCurl','tricepPushdown']},
+    {name:'Lower A', exercises:['squat','rdl','hipThrust','legCurl','calfRaise','plank']},
+    {name:'Upper B', exercises:['inclineDbPress','chestSupportedRow','lateralRaise','pullup','cableCurl','overheadTricepExt']},
+    {name:'Lower B', exercises:['legPress','hipThrust','goblet','legCurl','calfRaise','hangingKneeRaise']},
+  ],
+  'Push/Pull/Legs': [
+    {name:'Push', exercises:['benchPress','inclineDbPress','dbShoulderPress','lateralRaise','tricepPushdown']},
+    {name:'Pull', exercises:['latPulldown','seatedRow','barbellRow','rearDeltFly','dbCurl']},
+    {name:'Legs', exercises:['squat','rdl','hipThrust','legCurl','calfRaise','plank']},
+  ],
+};
+/* A true Push/Pull/Legs split needs 3+ days to mean anything (2 days literally can't include
+ * a leg day). Full Body's own 3-item rotation also can't fit full coverage into just 2
+ * sessions without dropping hamstrings/glutes. Both get a dedicated, deliberately-balanced
+ * 2-day pair instead of naively taking the first 2 items of a longer rotation. */
+const STYLE_ROTATIONS_2DAY = {
+  'Full Body': [
+    {name:'Full Body A', exercises:['squat','benchPress','seatedRow','dbShoulderPress','dbCurl','plank']},
+    {name:'Full Body B', exercises:['rdl','hipThrust','inclineDbPress','latPulldown','tricepPushdown','calfRaise']},
+  ],
+};
+const WEEKDAY_ASSIGN = {
+  2:['Mon','Thu'], 3:['Mon','Wed','Fri'], 4:['Mon','Tue','Thu','Fri'],
+  5:['Mon','Tue','Wed','Thu','Fri'], 6:['Mon','Tue','Wed','Thu','Fri','Sat'],
+};
+const WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WEEKDAY_FULL = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+const WEEKDAY_SHORT_LABEL = {Mon:'M',Tue:'T',Wed:'W',Thu:'T',Fri:'F',Sat:'S',Sun:'S'};
+
+function exById(id){ return EXERCISES.find(e=>e.id===id); }
+
+/* =========================================================================
+   WORKOUT PLAN GENERATOR + FLEXIBLE SCHEDULER
+========================================================================= */
+function prescriptionFor(exercise, experience){
+  const isCompound = exercise.type === 'compound';
+  const table = {
+    Beginner:     isCompound ? {sets:3, reps:'6–10',  rest:'90–120 sec', rpe:'6–7'} : {sets:2, reps:'10–15', rest:'45–60 sec', rpe:'6–8'},
+    Intermediate: isCompound ? {sets:3, reps:'6–10',  rest:'90–120 sec', rpe:'7–8'} : {sets:3, reps:'10–15', rest:'45–75 sec', rpe:'7–8'},
+    Advanced:     isCompound ? {sets:4, reps:'5–8',   rest:'120–150 sec',rpe:'7–9'} : {sets:3, reps:'8–15',  rest:'45–75 sec', rpe:'7–9'},
+  };
+  return table[experience] || table.Beginner;
+}
+function pickStyle(profile){
+  const days = Math.min(Math.max(parseInt(profile.daysPerWeek)||3, 2), 6);
+  const requested = (profile.style && profile.style !== 'Custom' && STYLE_ROTATIONS[profile.style]) ? profile.style : null;
+  // A Push/Pull/Legs split needs at least 3 days to include a leg day at all — forcing it
+  // into 2 days would silently train push+pull forever and never touch the lower body.
+  if(requested === 'Push/Pull/Legs' && days < 3) return 'Full Body';
+  if(requested) return requested;
+  if(days <= 3) return 'Full Body';
+  if(days === 4) return 'Upper/Lower';
+  return 'Push/Pull/Legs';
+}
+/** Which weekdays the plan should occupy, sorted to Mon→Sun order. Falls back to a sensible
+ *  even spread when the person hasn't picked specific days yet. */
+function resolveScheduleDays(profile){
+  const count = Math.min(Math.max(parseInt(profile.daysPerWeek)||3, 2), 6);
+  let days = Array.isArray(profile.scheduleDays) && profile.scheduleDays.length ? profile.scheduleDays.slice() : (WEEKDAY_ASSIGN[count] || WEEKDAY_ASSIGN[3]).slice();
+  days = days.filter(d=>WEEKDAYS.includes(d));
+  if(days.length === 0) days = WEEKDAY_ASSIGN[3].slice();
+  days.sort((a,b)=> WEEKDAYS.indexOf(a) - WEEKDAYS.indexOf(b));
+  return days;
+}
+function generatePlan(profile, existingPlan){
+  const scheduleDays = resolveScheduleDays(profile);
+  const days = Math.min(Math.max(scheduleDays.length, 2), 6);
+  const style = pickStyle(profile);
+  const rotation = (days === 2 && STYLE_ROTATIONS_2DAY[style]) ? STYLE_ROTATIONS_2DAY[style] : (STYLE_ROTATIONS[style] || STYLE_ROTATIONS['Full Body']);
+  const planDays = scheduleDays.map((weekday, idx)=>{
+    const tpl = rotation[idx % rotation.length];
+    const cycle = Math.floor(idx / rotation.length);
+    const name = cycle > 0 ? `${tpl.name} ${cycle+1}` : tpl.name;
+    return {
+      id: 'd'+idx,
+      weekday,
+      name,
+      exercises: tpl.exercises.map((exId, order)=>{
+        const ex = exById(exId);
+        const rx = prescriptionFor(ex, profile.experience || 'Beginner');
+        return {exerciseId: exId, order, sets: rx.sets, reps: rx.reps, rest: rx.rest, rpeTarget: rx.rpe};
+      })
+    };
+  });
+  return {
+    id: 'plan_'+Date.now(),
+    createdAt: new Date().toISOString(),
+    style, daysPerWeek: days,
+    profileSnapshot: {experience: profile.experience, goal: profile.goal},
+    days: planDays
+  };
+}
+
+/* ---- Recovery-aware conflict checking for the scheduler ---- */
+const MUSCLE_GROUP_MAP = {Chest:'Push', Shoulders:'Push', Triceps:'Push', Back:'Pull', Biceps:'Pull', Quadriceps:'Legs', Hamstrings:'Legs', Glutes:'Legs', Calves:'Legs', Core:'Core'};
+function dominantGroupsForDay(planDay){
+  const counts = {};
+  planDay.exercises.forEach(pe=>{
+    const ex = exById(pe.exerciseId);
+    const g = MUSCLE_GROUP_MAP[ex.category] || 'Other';
+    counts[g] = (counts[g]||0) + 1;
+  });
+  const total = planDay.exercises.length || 1;
+  return Object.keys(counts).filter(g=> g!=='Core' && counts[g]/total >= 0.4);
+}
+/** Returns human-readable warnings for any two workout days that fall on consecutive
+ *  calendar days (including the Sun→Mon wrap) and share a dominant muscle group. Never
+ *  blocks anything — the caller decides whether to show it and still proceed. */
+function checkScheduleConflicts(planDays){
+  const warnings = [];
+  const byWeekday = {};
+  planDays.forEach(d=> byWeekday[d.weekday] = d);
+  for(let i=0;i<7;i++){
+    const today = WEEKDAYS[i];
+    const tomorrow = WEEKDAYS[(i+1)%7];
+    const a = byWeekday[today], b = byWeekday[tomorrow];
+    if(!a || !b) continue;
+    const groupsA = dominantGroupsForDay(a), groupsB = dominantGroupsForDay(b);
+    const overlap = groupsA.filter(g=> groupsB.includes(g));
+    if(overlap.length){
+      warnings.push(`${a.name} (${WEEKDAY_FULL[today]}) and ${b.name} (${WEEKDAY_FULL[tomorrow]}) both train ${overlap.join(' & ')} on consecutive days.`);
+    }
+  }
+  return warnings;
+}
+/** Swap the weekday assignment of two plan days (used by drag-and-drop, "Change day", and
+ *  the missed-workout rescheduler). Never touches completed history — only the template. */
+function swapPlanDayWeekday(plan, dayIdA, weekdayB){
+  const dayA = plan.days.find(d=>d.id===dayIdA);
+  if(!dayA) return plan;
+  const dayB = plan.days.find(d=>d.weekday===weekdayB);
+  const oldWeekday = dayA.weekday;
+  dayA.weekday = weekdayB;
+  if(dayB) dayB.weekday = oldWeekday;
+  return plan;
+}
+
+/* =========================================================================
+   NUTRITION / BODY COMPOSITION MATH
+========================================================================= */
+function calcBMR(profile){
+  const w = parseFloat(profile.weight)||70, h = parseFloat(profile.height)||170, a = parseFloat(profile.age)||25;
+  const base = 10*w + 6.25*h - 5*a;
+  if(profile.gender === 'Male') return base + 5;
+  if(profile.gender === 'Female') return base - 161;
+  return base - 78;
+}
+function calcTDEE(profile){
+  const mult = {2:1.3, 3:1.375, 4:1.45, 5:1.55, 6:1.65}[Math.min(6,Math.max(2,parseInt(profile.daysPerWeek)||3))] || 1.4;
+  return calcBMR(profile) * mult;
+}
+function calcCalorieTarget(profile){
+  if(profile.customCalories) return parseInt(profile.customCalories);
+  const tdee = calcTDEE(profile);
+  const factors = {'Lose fat':0.8, 'Build muscle':1.1, 'Lose fat + build muscle':0.85, 'Maintain weight':1.0};
+  return Math.round(tdee * (factors[profile.goal] || 0.9));
+}
+function calcProteinRange(profile){
+  if(profile.customProteinLow && profile.customProteinHigh) return [parseInt(profile.customProteinLow), parseInt(profile.customProteinHigh)];
+  const w = parseFloat(profile.weight)||70;
+  return [Math.round(w*1.6), Math.round(w*2.2)];
+}
+function calcBMI(profile){
+  const w = parseFloat(profile.weight)||70, h = (parseFloat(profile.height)||170)/100;
+  return w/(h*h);
+}
+function bodyComp(weight, bf){
+  const fatMass = weight * (bf/100);
+  const lean = weight - fatMass;
+  return {fatMass, lean};
+}
+function targetWeightFromBF(lean, targetBF){
+  return lean / (1 - targetBF/100);
+}
+
+/* =========================================================================
+   PROGRESSIVE OVERLOAD ENGINE
+========================================================================= */
+function roundToIncrement(w, inc=1.25){ return Math.round(w/inc)*inc; }
+function recommendNextWeight(exerciseId){
+  const hist = Storage.getExerciseHistory(exerciseId);
+  if(!hist.length){
+    return {type:'first', message:'Start with a light weight that allows you to perform the target reps with good technique and approximately RPE 6–7.'};
+  }
+  const last = hist[hist.length-1];
+  const sets = last.sets || [];
+  if(!sets.length) return {type:'first', message:'Start with a light weight that allows you to perform the target reps with good technique and approximately RPE 6–7.'};
+  const anyPain = sets.some(s=>s.pain);
+  const weight = sets[sets.length-1].weight || sets[0].weight || 0;
+  const topRep = last.targetTopRep || 10;
+  const allHitTop = sets.every(s => (parseFloat(s.reps)||0) >= topRep);
+  const rpes = sets.map(s=>parseFloat(s.rpe)).filter(v=>!isNaN(v));
+  const avgRpe = rpes.length ? rpes.reduce((a,b)=>a+b,0)/rpes.length : 7;
+
+  if(anyPain){
+    return {type:'pain', message:`Because pain was reported, keep the weight at ${weight} kg and review your technique. If pain persists, consult a qualified healthcare professional.`};
+  }
+  if(allHitTop && avgRpe <= 8){
+    const inc = weight > 0 ? Math.max(1.25, roundToIncrement(weight*0.05,1.25)) : 2.5;
+    const next = roundToIncrement(weight + inc, 1.25);
+    return {type:'increase', message:`Great job! Consider increasing the weight to ${next} kg next session.`};
+  }
+  if(allHitTop && avgRpe > 8 && avgRpe < 9.5){
+    return {type:'maintain', message:`Consider maintaining ${weight} kg, or increasing slightly if your gym has an appropriate increment.`};
+  }
+  return {type:'maintain_struggle', message:`Keep the weight at ${weight} kg until you can complete the target rep range with good form.`};
+}
+const RPE_SCALE = [
+  {v:6, d:'Could do approximately 4 more reps'},
+  {v:7, d:'Could do approximately 3 more reps'},
+  {v:8, d:'Could do approximately 2 more reps'},
+  {v:9, d:'Could do approximately 1 more rep'},
+  {v:10,d:'Maximum effort — no more reps possible'},
+];
+
+/* =========================================================================
+   APP STATE / ROUTER
+========================================================================= */
+const App = {
+  state:{ route:'dashboard', activeWorkoutDay:null, workoutStartTime:null, workoutStartTimeDayId:null, exerciseFilter:'', categoryFilter:'All',
+    equipmentFilter:'All', difficultyFilter:'All', typeFilter:'All', regionFilter:'All',
+    profileDraft:null, progressTab:'body', chartsInited:false, missedBannerDismissed:{}, pendingImport:null, picker:null,
+    helpTab:'faq', helpChat:[], helpAsking:false, exerciseDraftInput:'', exerciseSuggestion:null, exerciseGenerating:false },
+
+  async init(){
+    const settings = Storage.getSettings();
+    document.documentElement.setAttribute('data-theme', settings.theme || 'dark');
+    loadCustomExercisesIntoLibrary();
+    // Paint immediately from whatever is cached locally on this device.
+    let profile = Storage.getUserProfile();
+    if(!profile){ profile = App.defaultProfile(); writeJSON(LS.PROFILE, profile); }
+    let plan = Storage.getWorkoutPlan();
+    if(!plan){ plan = generatePlan(profile); writeJSON(LS.PLAN, plan); }
+    // BUG FIX (QA audit, Phase 24 leak): App.init() can run more than once (e.g. after
+    // "Reset All Data"). Without removing the old listener first, each re-init stacked
+    // another hashchange handler, so navigation triggered N renders instead of one.
+    window.removeEventListener('hashchange', App.route);
+    window.addEventListener('hashchange', App.route);
+    // Accessibility fix (QA audit): a modal that can only be dismissed with a mouse/touch
+    // click is a real keyboard-navigation gap. Escape now closes it, same as tapping outside.
+    window.removeEventListener('keydown', App.handleEscape);
+    window.addEventListener('keydown', App.handleEscape);
+    App.route();
+
+    // Then reconcile with the cloud store tied to this signed-in account,
+    // so the same profile/history appear on every device.
+    await Cloud.init();
+    if(Cloud.db){
+      const cloud = await Cloud.pull();
+      if(cloud){
+        if(cloud.profile) writeJSON(LS.PROFILE, cloud.profile);
+        else Cloud.pushProfile(Storage.getUserProfile());
+
+        if(cloud.plan) writeJSON(LS.PLAN, cloud.plan);
+        else Cloud.pushPlan(Storage.getWorkoutPlan());
+
+        if(cloud.data){
+          if(cloud.data.history) writeJSON(LS.HISTORY, cloud.data.history);
+          if(cloud.data.measurements) writeJSON(LS.MEASURE, cloud.data.measurements);
+          if(cloud.data.recovery) writeJSON(LS.RECOVERY, cloud.data.recovery);
+        } else {
+          Cloud.pushData(Cloud.currentDataBundle());
+        }
+
+        if(cloud.draft) writeJSON(LS.DRAFT, cloud.draft);
+        if(cloud.customExercises) writeJSON(LS.CUSTOM_EX, cloud.customExercises);
+        else Cloud.pushCustomExercises(readJSON(LS.CUSTOM_EX, []));
+        loadCustomExercisesIntoLibrary();
+
+        if(cloud.settings){
+          writeJSON(LS.SETTINGS, cloud.settings);
+          document.documentElement.setAttribute('data-theme', cloud.settings.theme || 'dark');
+        } else {
+          Cloud.pushSettings(Storage.getSettings());
+        }
+      }
+      Cloud.subscribe((kind, data)=>{
+        if(kind==='profile') writeJSON(LS.PROFILE, data);
+        if(kind==='plan') writeJSON(LS.PLAN, data);
+        if(kind==='draft') writeJSON(LS.DRAFT, data);
+        if(kind==='customExercises'){ writeJSON(LS.CUSTOM_EX, data); loadCustomExercisesIntoLibrary(); }
+        if(kind==='data'){
+          if(data.history) writeJSON(LS.HISTORY, data.history);
+          if(data.measurements) writeJSON(LS.MEASURE, data.measurements);
+          if(data.recovery) writeJSON(LS.RECOVERY, data.recovery);
+        }
+        if(kind==='settings'){
+          writeJSON(LS.SETTINGS, data);
+          document.documentElement.setAttribute('data-theme', data.theme || 'dark');
+        }
+        render();
+      });
+    }
+    render();
+  },
+
+  defaultProfile(){
+    return {
+      name:'', age:22, gender:'Prefer not to say', height:167, weight:74, bodyFat:'', targetBodyFat:'',
+      goal:'Lose fat + build muscle', experience:'Beginner', daysPerWeek:3, duration:60,
+      equipment:'Full gym', style:'Full Body', customCalories:'', customProteinLow:'', customProteinHigh:'',
+      scheduleDays:['Mon','Wed','Fri'], allowConsecutive:true
+    };
+  },
+
+  route(){
+    const hash = (location.hash || '#/dashboard').replace('#/','');
+    App.state.route = hash.split('/')[0] || 'dashboard';
+    render();
+  },
+  go(route){ location.hash = '#/'+route; },
+
+  toggleTheme(){
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    const s = Storage.getSettings(); s.theme = next; Storage.saveSettings(s);
+    render();
+  },
+
+  showToast(msg){
+    const root = document.getElementById('toast-root');
+    const el = document.createElement('div');
+    el.className = 'toast fade-in';
+    el.textContent = msg;
+    root.appendChild(el);
+    setTimeout(()=> el.remove(), 3200);
+  },
+
+  openModal(html){
+    const root = document.getElementById('modal-root');
+    root.innerHTML = `<div class="modal-backdrop" onclick="if(event.target===this) App.closeModal()"><div class="modal-panel fade-in">${html}</div></div>`;
+  },
+  closeModal(){
+    flushDraftSave();
+    document.getElementById('modal-root').innerHTML = '';
+    render();
+  },
+  handleEscape(e){
+    if(e.key === 'Escape' && document.getElementById('modal-root').innerHTML.trim() !== ''){
+      App.closeModal();
+    }
+  },
+};
+
+/* =========================================================================
+   RENDER: SHELL
+========================================================================= */
+function render(){
+  const app = document.getElementById('app');
+  // Defensive fallback: render() can now be triggered by closeModal() at points where
+  // storage was just wiped (see doReset), so never hand a null profile to a page renderer.
+  const profile = Storage.getUserProfile() || App.defaultProfile();
+  const nav = [
+    {id:'dashboard', label:'Dashboard', icon:ICONS.dashboard},
+    {id:'workout', label:'Workout', icon:ICONS.workout},
+    {id:'calendar', label:'Calendar', icon:ICONS.calendar},
+    {id:'exercises', label:'Exercises', icon:ICONS.exercises},
+    {id:'stretching', label:'Stretch', icon:ICONS.stretch},
+    {id:'progress', label:'Progress', icon:ICONS.progress},
+    {id:'profile', label:'Profile', icon:ICONS.profile},
+  ];
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  app.innerHTML = `
+    <div style="display:flex;min-height:100vh;">
+      <nav class="sidenav">
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 26px;">
+          <div style="width:34px;height:34px;border-radius:10px;background:var(--ember);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;color:#1A0B05;">I</div>
+          <div class="font-display" style="font-weight:700;font-size:17px;">Ironline</div>
+        </div>
+        ${nav.map(n=>`<a class="navitem ${App.state.route===n.id?'active':''}" onclick="App.go('${n.id}')">${n.icon}${n.label}</a>`).join('')}
+        <div style="position:absolute;bottom:20px;left:14px;right:14px;">
+          <button class="btn btn-ghost btn-sm" style="width:100%" onclick="App.toggleTheme()">${isLight?ICONS.moon:ICONS.sun} ${isLight?'Dark mode':'Light mode'}</button>
+        </div>
+      </nav>
+      <div style="flex:1;min-width:0;">
+        <div class="topbar">
+          <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;">
+            <div class="font-display" style="font-weight:700;font-size:16px;">${navTitle(App.state.route)}</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+              <div id="save-indicator" class="save-indicator"><span class="save-dot"></span> Saved</div>
+              <div id="cloud-indicator" class="save-indicator" style="font-size:11px;">${Cloud.ready ? (Cloud.db?'<span class="save-dot" style="background:var(--teal)"></span> Synced across your devices':'<span class="save-dot" style="background:var(--danger)"></span> Local only') : '<span class="save-dot saving"></span> Checking cloud sync…'}</div>
+            </div>
+          </div>
+        </div>
+        <div id="mainpad" class="container" style="padding-top:20px;padding-bottom:40px;">
+          ${renderRoute(App.state.route, profile)}
+        </div>
+      </div>
+    </div>
+    <nav class="bottomnav">
+      ${nav.map(n=>`<div class="navitem ${App.state.route===n.id?'active':''}" onclick="App.go('${n.id}')">${n.icon}<span>${n.label}</span></div>`).join('')}
+    </nav>
+    <button class="help-fab" onclick="openHelpModal()" aria-label="Help">?</button>
+  `;
+  afterRender(App.state.route);
+}
+function navTitle(route){
+  return {dashboard:'Dashboard', workout:"Today's Workout", calendar:'Weekly Calendar', exercises:'Exercise Library', stretching:'Stretching & Mobility', progress:'Progress', profile:'Profile & Settings'}[route] || 'Ironline';
+}
+function renderRoute(route, profile){
+  switch(route){
+    case 'dashboard': return renderDashboard(profile);
+    case 'workout': return renderWorkout(profile);
+    case 'calendar': return renderCalendar(profile);
+    case 'exercises': return renderExercises(profile);
+    case 'stretching': return renderStretching(profile);
+    case 'progress': return renderProgress(profile);
+    case 'profile': return renderProfile(profile);
+    default: return renderDashboard(profile);
+  }
+}
+function afterRender(route){
+  if(route === 'progress') initProgressCharts();
+}
+
+/* =========================================================================
+   HELPERS: today / plan lookup
+========================================================================= */
+function todayWeekdayCode(){ const d = new Date().getDay(); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]; }
+function weekdayCodeForDate(date){ const d = date.getDay(); return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]; }
+function isoForOffset(daysAgo){ const d = new Date(); d.setDate(d.getDate()-daysAgo); return localISODate(d); }
+function planDayForToday(){
+  const plan = Storage.getWorkoutPlan();
+  if(!plan) return null;
+  const code = todayWeekdayCode();
+  return plan.days.find(d=>d.weekday===code) || null;
+}
+function planDayForWeekday(code){
+  const plan = Storage.getWorkoutPlan();
+  if(!plan) return null;
+  return plan.days.find(d=>d.weekday===code) || null;
+}
+function historyByDate(){
+  const hist = Storage.getWorkoutHistory();
+  const map = {};
+  hist.forEach(h=>{ map[h.date] = map[h.date] || []; map[h.date].push(h); });
+  return map;
+}
+function todayISO(){ return localISODate(); }
+function isCompletedToday(planDayId){
+  const hist = Storage.getWorkoutHistory();
+  return hist.some(h=> h.date === todayISO() && h.planDayId === planDayId && h.completed);
+}
+function hasAnySessionOnDate(date, planDayId){
+  const hist = Storage.getWorkoutHistory();
+  return hist.some(h=> h.date === date && h.planDayId === planDayId);
+}
+/** Looks at yesterday only (keeps this simple and non-nagging): if yesterday was a
+ *  scheduled workout day and nothing — completed or skipped — was recorded for it,
+ *  surface it once so the person can decide what to do, rather than silently
+ *  compressing the rest of the week. */
+function getMissedWorkout(){
+  const yDate = isoForOffset(1);
+  const yCode = weekdayCodeForDate((()=>{ const d = new Date(); d.setDate(d.getDate()-1); return d; })());
+  if(yCode === 'Sun' || yCode === 'Sat'){ /* still check — rest days aren't excluded by day type */ }
+  const day = planDayForWeekday(yCode);
+  if(!day) return null; // yesterday was a rest day, nothing to miss
+  if(hasAnySessionOnDate(yDate, day.id)) return null;
+  if(App.state.missedBannerDismissed[yDate+day.id]) return null;
+  return {day, date: yDate, weekday: yCode};
+}
+
+/* =========================================================================
+   DASHBOARD
+========================================================================= */
+function renderDashboard(p){
+  const measurements = Storage.getBodyMeasurements();
+  const startWeight = measurements.length ? measurements[0].weight : p.weight;
+  const currentWeight = measurements.length ? measurements[measurements.length-1].weight : p.weight;
+  const weightChange = (currentWeight - startWeight);
+  const bmi = calcBMI(p);
+  const cal = calcCalorieTarget(p);
+  const [pLow, pHigh] = calcProteinRange(p);
+  const plan = Storage.getWorkoutPlan();
+  const todayPlanDay = planDayForToday();
+  const hist = Storage.getWorkoutHistory();
+  const thisWeekCount = hist.filter(h=>{
+    const d = parseLocalDate(h.date); const now = new Date();
+    const diffDays = (now - d)/86400000;
+    return diffDays >= 0 && diffDays < 7 && h.completed;
+  }).length;
+  const targetPerWeek = plan ? plan.daysPerWeek : 3;
+  const completionPct = Math.min(100, Math.round((thisWeekCount/targetPerWeek)*100));
+
+  const startBF = measurements.find(m=>m.bodyFat!=='' && m.bodyFat!=null);
+  const latestBF = [...measurements].reverse().find(m=>m.bodyFat!=='' && m.bodyFat!=null);
+  const currentBF = latestBF ? latestBF.bodyFat : (p.bodyFat || null);
+
+  let bfBlock = '';
+  if(currentBF){
+    const comp = bodyComp(currentWeight, currentBF);
+    const startComp = startBF ? bodyComp(startBF.weight, startBF.bodyFat) : comp;
+    const bfChange = (currentBF - (startBF?startBF.bodyFat:currentBF)).toFixed(1);
+    let targetBlock = '';
+    if(p.targetBodyFat){
+      const targetW = targetWeightFromBF(comp.lean, parseFloat(p.targetBodyFat));
+      const startPct = startBF ? startBF.bodyFat : currentBF;
+      const totalToLose = Math.max(startPct - p.targetBodyFat, 0.0001);
+      const doneSoFar = Math.max(startPct - currentBF, 0);
+      const bfProgress = Math.min(100, Math.max(0, Math.round((doneSoFar/totalToLose)*100)));
+      targetBlock = `
+        <div class="divider"></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);margin-bottom:6px;">
+          <span>Current: ${currentBF}%</span><span>Goal: ${p.targetBodyFat}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${bfProgress}%"></div></div>
+        <div class="grid grid-2" style="margin-top:12px;">
+          <div class="card-flat"><div class="stat-label">Estimated fat to lose</div><div style="font-weight:700;margin-top:4px;">${Math.max(comp.fatMass - (comp.lean*(p.targetBodyFat/100)/(1-p.targetBodyFat/100)),0).toFixed(1)} kg</div></div>
+          <div class="card-flat"><div class="stat-label">Estimated target weight</div><div style="font-weight:700;margin-top:4px;">${targetW.toFixed(1)} kg</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-faint);margin-top:8px;">Estimate only — assumes lean mass is maintained. Actual results vary.</div>
+      `;
+    }
+    bfBlock = `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;"><h3 style="margin:0;font-size:15.5px;">Body composition</h3><span class="pill">Body fat</span></div>
+        <div class="grid grid-3" style="margin-top:14px;">
+          <div><div class="stat-num">${currentBF}%</div><div class="stat-label">Current BF</div></div>
+          <div><div class="stat-num">${comp.fatMass.toFixed(1)}</div><div class="stat-label">Fat mass (kg)</div></div>
+          <div><div class="stat-num">${comp.lean.toFixed(1)}</div><div class="stat-label">Lean mass (kg)</div></div>
+        </div>
+        ${targetBlock}
+      </div>`;
+  } else {
+    bfBlock = `<div class="card"><h3 style="margin:0 0 8px;font-size:15.5px;">Body composition</h3><p style="color:var(--text-dim);font-size:13.5px;margin:0;">Enter your estimated body fat percentage for more accurate body-composition tracking.</p><button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="App.go('profile')">Add body fat %</button></div>`;
+  }
+
+  const missed = getMissedWorkout();
+  const missedBanner = missed ? `
+    <div class="card" style="margin-bottom:16px;border-color:var(--amber);">
+      <div style="font-weight:700;font-size:14.5px;margin-bottom:4px;">You missed ${missed.day.name} (${WEEKDAY_FULL[missed.weekday]})</div>
+      <p style="font-size:13px;color:var(--text-dim);margin:0 0 12px;">What would you like to do? Recovery matters more than forcing every workout in — nothing gets silently rescheduled.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="handleMissedMove('${missed.day.id}','${missed.date}')">Move to next available day</button>
+        <button class="btn btn-ghost btn-sm" onclick="handleMissedSkip('${missed.day.id}','${missed.date}')">Skip & continue</button>
+        <button class="btn btn-ghost btn-sm" onclick="handleMissedReschedule('${missed.date}','${missed.day.id}')">Reschedule my week</button>
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="fade-in">
+      ${missedBanner}
+      <div class="card" style="background:linear-gradient(135deg, var(--surface), var(--surface-2));margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;">
+          <div>
+            <div class="pill" style="margin-bottom:10px;">${p.goal}</div>
+            <h2 style="margin:0;font-size:22px;">${p.name ? 'Hey ' + escapeHtml(p.name) + ',' : 'Today'} ${todayPlanDay ? 'time to train' : 'enjoy your rest day'}</h2>
+            <p style="color:var(--text-dim);margin:6px 0 0;font-size:14px;">${todayPlanDay ? `Up next: <strong style="color:var(--text)">${todayPlanDay.name}</strong> · ~${p.duration} min` : 'No training scheduled today — focus on recovery, sleep, and mobility.'}</p>
+          </div>
+          <button class="btn btn-primary" onclick="App.go('workout')">${todayPlanDay ? 'Start workout' : 'View plan'}</button>
+        </div>
+      </div>
+
+      <div class="grid grid-4" style="margin-bottom:16px;">
+        <div class="card"><div class="stat-num">${currentWeight}<span style="font-size:14px;color:var(--text-dim);"> kg</span></div><div class="stat-label">Current weight</div><div style="font-size:12px;color:${weightChange<=0?'var(--good)':'var(--amber)'};margin-top:4px;">${weightChange===0?'No change yet': (weightChange>0?'+':'')+weightChange.toFixed(1)+' kg since start'}</div></div>
+        <div class="card"><div class="stat-num">${p.height}</div><div class="stat-label">Height (cm)</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">BMI ${bmi.toFixed(1)} · informational only</div></div>
+        <div class="card"><div class="stat-num">${cal}</div><div class="stat-label">Calorie target / day</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">Estimate — adjust in Profile</div></div>
+        <div class="card"><div class="stat-num">${pLow}–${pHigh}<span style="font-size:13px;color:var(--text-dim);">g</span></div><div class="stat-label">Protein target / day</div></div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:2fr 1fr;margin-bottom:16px;">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;"><h3 style="margin:0;font-size:15.5px;">This week's training</h3><span style="font-size:13px;color:var(--text-dim);">${thisWeekCount}/${targetPerWeek} workouts</span></div>
+          <div class="progress-track" style="margin-top:12px;"><div class="progress-fill" style="width:${completionPct}%"></div></div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+            ${WEEKDAY_ASSIGN[plan?plan.daysPerWeek:3] ? plan.days.map(d=>`<span class="pill" style="${isCompletedToday(d.id)?'border-color:var(--good);color:var(--good);':''}">${d.weekday} · ${d.name}</span>`).join('') : ''}
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 10px;font-size:15.5px;">Recovery check-in</h3>
+          <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 12px;">Rate today (1 = low, 5 = high)</p>
+          <div id="recovery-form">
+            <div class="field"><label class="field-label">Sleep hours</label><input class="input" id="rec-sleep" type="number" min="0" max="14" step="0.5" placeholder="7.5"></div>
+            <div class="field"><label class="field-label">Soreness (1-5)</label><input class="input" id="rec-sore" type="number" min="1" max="5" placeholder="2"></div>
+            <div class="field"><label class="field-label">Energy (1-5)</label><input class="input" id="rec-energy" type="number" min="1" max="5" placeholder="4"></div>
+            <button class="btn btn-ghost btn-sm" style="width:100%" onclick="submitRecovery()">Log check-in</button>
+          </div>
+        </div>
+      </div>
+
+      ${bfBlock}
+    </div>
+  `;
+}
+function submitRecovery(){
+  const sleep = document.getElementById('rec-sleep').value;
+  const sore = parseInt(document.getElementById('rec-sore').value);
+  const energy = parseInt(document.getElementById('rec-energy').value);
+  if(!sleep && !sore && !energy){ App.showToast('Enter at least one value'); return; }
+  Storage.saveRecoveryEntry({date: todayISO(), sleepHours: parseFloat(sleep)||null, soreness: sore||null, energy: energy||null});
+  let msg = 'Check-in logged.';
+  if((sore && sore>=4) || (energy && energy<=2)){
+    msg = 'Logged. Your soreness/energy suggests today might be a good day to reduce intensity or take an extra recovery day.';
+  }
+  App.showToast(msg);
+  render();
+}
+function handleMissedSkip(dayId, date){
+  Storage.saveWorkoutSession({id:'skip_'+Date.now(), date, planDayId:dayId, dayName: Storage.getWorkoutPlan().days.find(d=>d.id===dayId).name, startTime:null, endTime:null, exercises:[], completed:false, status:'skipped'});
+  App.state.missedBannerDismissed[date+dayId] = true;
+  App.showToast('Marked as skipped. Moving on with the program.');
+  render();
+}
+function handleMissedMove(dayId, date){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  const scheduled = new Set(plan.days.map(d=>d.weekday));
+  const todayIdx = WEEKDAYS.indexOf(todayWeekdayCode());
+  let target = null;
+  for(let i=0;i<7;i++){
+    const candidate = WEEKDAYS[(todayIdx+i)%7];
+    if(!scheduled.has(candidate)){ target = candidate; break; }
+  }
+  // Also record the missed slot as skipped so it's not re-flagged.
+  Storage.saveWorkoutSession({id:'skip_'+Date.now(), date, planDayId:dayId, dayName: day.name, startTime:null, endTime:null, exercises:[], completed:false, status:'skipped'});
+  App.state.missedBannerDismissed[date+dayId] = true;
+  if(!target){
+    App.showToast('No open day this week — skipped and continuing on schedule.');
+    render();
+    return;
+  }
+  swapPlanDayWeekday(plan, dayId, target);
+  Storage.saveWorkoutPlan(plan);
+  const conflicts = checkScheduleConflicts(plan.days);
+  App.showToast(conflicts.length ? `Moved ${day.name} to ${WEEKDAY_FULL[target]}. Note: ${conflicts[0]}` : `Moved ${day.name} to ${WEEKDAY_FULL[target]}.`);
+  render();
+}
+function handleMissedReschedule(date, dayId){
+  App.state.missedBannerDismissed[date+dayId] = true;
+  App.go('profile');
+}
+
+/* =========================================================================
+   WORKOUT PAGE
+========================================================================= */
+function renderWorkout(p){
+  const plan = Storage.getWorkoutPlan();
+  if(!plan) return `<div class="empty-state">No plan yet. Visit your Profile to generate one.</div>`;
+  const activeId = App.state.activeWorkoutDay || (planDayForToday()?planDayForToday().id : plan.days[0].id);
+  const day = plan.days.find(d=>d.id===activeId) || plan.days[0];
+  const isToday = planDayForToday() && planDayForToday().id === day.id;
+  // BUG FIX (QA audit): workoutStartTime was declared but never assigned, so every completed
+  // session recorded startTime == endTime (a ~0-second "duration"). Stamp it the first time
+  // this specific day is opened, and only reset it once that workout is actually completed.
+  if(App.state.workoutStartTimeDayId !== day.id){
+    App.state.workoutStartTime = new Date().toISOString();
+    App.state.workoutStartTimeDayId = day.id;
+  }
+
+  const warmup = DYNAMIC_WARMUPS.slice(0,4);
+  const cooldown = STATIC_STRETCHES.slice(0,3);
+
+  // Restore any in-progress entries for this exact day+date so nothing typed is ever lost.
+  const draft = Storage.getWorkoutDraft(day.id);
+  const df = (draft && draft.fields) || {};
+  const dval = key => (df[key] !== undefined && df[key] !== null) ? String(df[key]) : '';
+  const dchecked = key => df[key] ? 'checked' : '';
+
+  const exRows = day.exercises.map((pe, idx)=>{
+    const ex = exById(pe.exerciseId);
+    const rec = recommendNextWeight(pe.exerciseId);
+    const last = Storage.getExerciseHistory(pe.exerciseId).slice(-1)[0];
+    return `
+    <div class="card" style="margin-bottom:12px;" id="ex-card-${idx}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+        <div style="display:flex;gap:10px;">
+          <div style="flex-shrink:0;background:var(--surface-2);border-radius:10px;padding:4px;">${IMG(ex, 46)}</div>
+          <div>
+            <div style="font-weight:700;font-size:15.5px;">${idx+1}. ${ex.name}</div>
+            <div style="font-size:12.5px;color:var(--text-dim);margin-top:2px;">${ex.target} · ${pe.sets} sets × ${pe.reps} reps · rest ${pe.rest} · RPE ${pe.rpeTarget}</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openExerciseDetail('${ex.id}')">How to perform</button>
+      </div>
+      <div class="card-flat" style="margin-top:10px;font-size:12.5px;color:var(--text-dim);">
+        ${rec.type==='first' ? rec.message : `Last time: ${last ? last.sets.map(s=>s.weight+'kg×'+s.reps).join(', ') : '—'}. ${rec.message}`}
+      </div>
+      <div class="divider"></div>
+      <div style="display:grid;grid-template-columns:28px 1fr 1fr 1fr 34px;gap:8px;font-size:11px;color:var(--text-faint);margin-bottom:6px;">
+        <span>Set</span><span>Weight (kg)</span><span>Reps</span><span>RPE</span><span></span>
+      </div>
+      <div id="sets-${idx}">
+        ${Array.from({length: pe.sets}, (_,i)=>i+1).map(n=>`
+          <div class="set-row">
+            <span style="color:var(--text-dim);font-size:13px;">${n}</span>
+            <input class="input" type="number" step="0.5" id="w-${idx}-${n}" placeholder="kg" value="${dval('w-'+idx+'-'+n)}" oninput="scheduleDraftSave('${day.id}')">
+            <input class="input" type="number" id="r-${idx}-${n}" placeholder="reps" value="${dval('r-'+idx+'-'+n)}" oninput="scheduleDraftSave('${day.id}')">
+            <input class="input" type="number" min="1" max="10" id="rpe-${idx}-${n}" placeholder="RPE" value="${dval('rpe-'+idx+'-'+n)}" oninput="scheduleDraftSave('${day.id}')">
+            <input type="checkbox" id="done-${idx}-${n}" style="width:20px;height:20px;accent-color:var(--ember);" ${dchecked('done-'+idx+'-'+n)} onchange="scheduleDraftSave('${day.id}')">
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+        <label style="font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:6px;"><input type="checkbox" id="pain-${idx}" ${dchecked('pain-'+idx)} onchange="scheduleDraftSave('${day.id}')"> Felt pain during this exercise</label>
+      </div>
+      <textarea class="input" style="margin-top:8px;" id="notes-${idx}" placeholder="Notes (optional)" oninput="scheduleDraftSave('${day.id}')">${escapeHtml(dval('notes-'+idx))}</textarea>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="fade-in">
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px;">
+        ${plan.days.map(d=>`
+          <div class="day-tab ${d.id===day.id?'today':''} ${isCompletedToday(d.id)?'completed':''}" style="min-width:88px;" onclick="App.state.activeWorkoutDay='${d.id}';render();">
+            ${d.weekday}<br><span style="font-weight:400;font-size:11px;">${d.name}</span>
+          </div>`).join('')}
+      </div>
+
+      ${draft ? `<div class="card" style="margin-bottom:16px;border-color:var(--teal);"><div style="font-size:12.5px;color:var(--text-dim);"><span style="color:var(--teal);font-weight:700;">Draft restored</span> — your in-progress entries from earlier were saved automatically and are filled in below.</div></div>` : ''}
+
+      <div class="card" style="margin-bottom:16px;background:var(--surface-2);">
+        <h3 style="margin:0 0 8px;font-size:15px;">Warm-up (before training)</h3>
+        <div class="chip-row">${warmup.map(w=>`<span class="chip">${w.name} · ${w.reps}</span>`).join('')}</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 class="font-display" style="font-size:19px;margin:0;">${WEEKDAY_FULL[day.weekday]} — ${day.name}</h2>
+        <button class="btn btn-ghost btn-sm" onclick="openEditDayModal('${day.id}')">Edit exercises</button>
+      </div>
+      ${exRows}
+
+      <div class="card" style="margin:16px 0;background:var(--surface-2);">
+        <h3 style="margin:0 0 8px;font-size:15px;">Cool-down stretching (after training)</h3>
+        <div class="chip-row">${cooldown.map(s=>`<span class="chip" onclick="App.go('stretching')">${s.name} · ${s.duration}</span>`).join('')}</div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" style="flex:1;padding:15px;font-size:15px;" onclick="completeWorkout('${day.id}')">Complete Workout</button>
+        <button class="btn btn-ghost" style="padding:15px 16px;" onclick="openSkipModal('${day.id}')">Skip</button>
+      </div>
+    </div>
+  `;
+}
+/* Debounced per-field autosave for the workout screen — see Storage.saveWorkoutDraft(). */
+let draftSaveTimeout, pendingDraftDayId = null;
+function scheduleDraftSave(dayId){
+  clearTimeout(draftSaveTimeout);
+  pendingDraftDayId = dayId;
+  draftSaveTimeout = setTimeout(()=> saveDraftNow(dayId), 350);
+}
+/* BUG FIX (QA re-audit): if the person closed any modal within the 350ms debounce window
+ * (e.g. tapped "How to perform" right after typing a weight, then closed it), the pending
+ * keystroke had never been written to the draft yet and was lost when the page re-rendered.
+ * Closing a modal now flushes the pending save synchronously first. */
+function flushDraftSave(){
+  if(draftSaveTimeout){
+    clearTimeout(draftSaveTimeout);
+    if(pendingDraftDayId) saveDraftNow(pendingDraftDayId);
+    draftSaveTimeout = null;
+    pendingDraftDayId = null;
+  }
+}
+function saveDraftNow(dayId){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan && plan.days.find(d=>d.id===dayId);
+  if(!day) return;
+  const fields = {};
+  let hasAny = false;
+  day.exercises.forEach((pe, idx)=>{
+    for(let n=1; n<=pe.sets; n++){
+      const w = document.getElementById(`w-${idx}-${n}`);
+      const r = document.getElementById(`r-${idx}-${n}`);
+      const rpe = document.getElementById(`rpe-${idx}-${n}`);
+      const done = document.getElementById(`done-${idx}-${n}`);
+      if(w && w.value !== ''){ fields[`w-${idx}-${n}`] = w.value; hasAny = true; }
+      if(r && r.value !== ''){ fields[`r-${idx}-${n}`] = r.value; hasAny = true; }
+      if(rpe && rpe.value !== ''){ fields[`rpe-${idx}-${n}`] = rpe.value; hasAny = true; }
+      if(done && done.checked){ fields[`done-${idx}-${n}`] = true; hasAny = true; }
+    }
+    const pain = document.getElementById(`pain-${idx}`);
+    const notes = document.getElementById(`notes-${idx}`);
+    if(pain && pain.checked){ fields[`pain-${idx}`] = true; hasAny = true; }
+    if(notes && notes.value){ fields[`notes-${idx}`] = notes.value; hasAny = true; }
+  });
+  if(!hasAny){ Storage.clearWorkoutDraft(dayId); return; }
+  Storage.saveWorkoutDraft(dayId, fields);
+}
+function openSkipModal(dayId){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  const otherDays = WEEKDAYS.filter(w=> w !== day.weekday);
+  App.openModal(`
+    <h3 style="margin:0 0 6px;">Can't train today?</h3>
+    <p style="color:var(--text-dim);font-size:13.5px;margin:0 0 16px;">${day.name} is scheduled for today. What would you like to do?</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-ghost" style="justify-content:flex-start;" onclick="skipWorkoutToday('${dayId}')">Skip this workout and continue the program</button>
+      <div class="card-flat">
+        <label class="field-label">Move to another day this week</label>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <select id="skip-move-day" class="input">${otherDays.map(w=>`<option value="${w}">${WEEKDAY_FULL[w]}</option>`).join('')}</select>
+          <button class="btn btn-primary btn-sm" onclick="moveWorkoutToDay('${dayId}')">Move</button>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="App.closeModal()">Keep schedule unchanged</button>
+    </div>
+  `);
+}
+function skipWorkoutToday(dayId){
+  const day = Storage.getWorkoutPlan().days.find(d=>d.id===dayId);
+  Storage.saveWorkoutSession({id:'skip_'+Date.now(), date: todayISO(), planDayId: dayId, dayName: day.name, startTime:null, endTime:null, exercises:[], completed:false, status:'skipped'});
+  Storage.clearWorkoutDraft(dayId);
+  App.closeModal();
+  App.showToast(`${day.name} skipped — the program continues on schedule.`);
+  App.go('dashboard');
+}
+function moveWorkoutToDay(dayId){
+  const targetWeekday = document.getElementById('skip-move-day').value;
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  // Log today's slot as skipped (moved), then swap the weekday assignment.
+  Storage.saveWorkoutSession({id:'skip_'+Date.now(), date: todayISO(), planDayId: dayId, dayName: day.name, startTime:null, endTime:null, exercises:[], completed:false, status:'moved'});
+  Storage.clearWorkoutDraft(dayId);
+  swapPlanDayWeekday(plan, dayId, targetWeekday);
+  Storage.saveWorkoutPlan(plan);
+  const conflicts = checkScheduleConflicts(plan.days);
+  App.closeModal();
+  App.showToast(conflicts.length ? `Moved to ${WEEKDAY_FULL[targetWeekday]}. Note: ${conflicts[0]}` : `Moved ${day.name} to ${WEEKDAY_FULL[targetWeekday]}.`);
+  App.go('calendar');
+}
+
+/* =========================================================================
+   EDIT WORKOUT PLAN — add / remove / swap exercises on a specific day.
+   Editing only ever touches plan.days (the template). Completed workout
+   history is a separate, append-only record and is never rewritten here.
+========================================================================= */
+function prescriptionForCurrentProfile(ex){
+  const profile = Storage.getUserProfile();
+  return prescriptionFor(ex, (profile && profile.experience) || 'Beginner');
+}
+function openEditDayModal(dayId){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  App.openModal(editDayModalHTML(day));
+}
+function editDayModalHTML(day){
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="pill" style="margin-bottom:8px;">${WEEKDAY_FULL[day.weekday]}</div>
+        <h2 style="margin:0;font-size:19px;">Edit ${day.name}</h2>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="App.closeModal()">${ICONS.close}</button>
+    </div>
+    <p style="color:var(--text-dim);font-size:13px;margin:10px 0 16px;">Add, remove, or swap exercises for this day. Your saved workout history never changes when you edit the plan.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${day.exercises.map((pe,idx)=>{
+        const ex = exById(pe.exerciseId);
+        return `<div class="card-flat" style="display:flex;align-items:center;gap:10px;">
+          <div style="flex-shrink:0;">${IMG(ex, 36)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13.5px;">${ex.name}</div>
+            <div style="font-size:11.5px;color:var(--text-faint);">${pe.sets} × ${pe.reps} · ${ex.category}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openExercisePicker('${day.id}','swap',${idx})">Swap</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="removeExerciseFromDay('${day.id}',${idx})">✕</button>
+        </div>`;
+      }).join('')}
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="openExercisePicker('${day.id}','add',null)">${ICONS.plus} Add exercise</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;" onclick="App.closeModal()">Done</button>
+  `;
+}
+function openExercisePicker(dayId, mode, idx){
+  App.state.picker = {dayId, mode, idx, query:'', category:'All'};
+  App.openModal(exercisePickerHTML());
+}
+function exercisePickerHTML(){
+  const st = App.state.picker;
+  const cats = ['All', ...CATEGORIES];
+  const filtered = EXERCISES.filter(e=>{
+    const mq = !st.query || e.name.toLowerCase().includes(st.query.toLowerCase());
+    const mc = st.category === 'All' || e.category === st.category;
+    return mq && mc;
+  });
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;">${st.mode==='add' ? 'Add an exercise' : 'Swap this exercise'}</h3>
+      <button class="btn btn-ghost btn-sm" onclick="backToEditDay()">${ICONS.close}</button>
+    </div>
+    <input class="input" placeholder="Search exercises…" value="${escapeHtml(st.query)}" oninput="App.state.picker.query=this.value;App.openModal(exercisePickerHTML())" style="margin-bottom:10px;">
+    <div class="chip-row" style="margin-bottom:12px;">
+      ${cats.map(c=>`<span class="chip ${st.category===c?'active':''}" onclick="App.state.picker.category='${c}';App.openModal(exercisePickerHTML())">${c}</span>`).join('')}
+    </div>
+    <div style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+      ${filtered.length===0 ? `<div class="empty-state">No exercises match.</div>` : filtered.map(e=>`
+        <div class="exlist-item" style="margin-bottom:0;" onclick="choosePickerExercise('${e.id}')">
+          <div style="flex-shrink:0;">${IMG(e,32)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13.5px;">${e.name}</div>
+            <div style="font-size:11.5px;color:var(--text-dim);">${e.target} · ${e.equipment}</div>
+          </div>
+          <span class="badge-difficulty badge-${e.difficulty}">${e.difficulty}</span>
+        </div>`).join('')}
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:14px;" onclick="backToEditDay()">Cancel</button>
+  `;
+}
+function backToEditDay(){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===App.state.picker.dayId);
+  App.openModal(editDayModalHTML(day));
+}
+function choosePickerExercise(exId){
+  const {dayId, mode, idx} = App.state.picker;
+  if(mode === 'add') addExerciseToDay(dayId, exId);
+  else swapExerciseInDay(dayId, idx, exId);
+}
+function addExerciseToDay(dayId, exId){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  const ex = exById(exId);
+  const rx = prescriptionForCurrentProfile(ex);
+  day.exercises.push({exerciseId: exId, order: day.exercises.length, sets: rx.sets, reps: rx.reps, rest: rx.rest, rpeTarget: rx.rpe});
+  Storage.saveWorkoutPlan(plan);
+  Storage.clearWorkoutDraft(dayId); // set-row positions shift, so any unsaved in-progress draft for this day no longer lines up
+  App.showToast(`${ex.name} added to ${day.name}.`);
+  App.openModal(editDayModalHTML(day));
+}
+function removeExerciseFromDay(dayId, idx){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  if(day.exercises.length <= 1){ App.showToast('A workout needs at least one exercise — swap it instead of removing it.'); return; }
+  const removed = exById(day.exercises[idx].exerciseId);
+  day.exercises.splice(idx, 1);
+  day.exercises.forEach((pe,i)=> pe.order = i);
+  Storage.saveWorkoutPlan(plan);
+  Storage.clearWorkoutDraft(dayId);
+  App.showToast(`${removed.name} removed from ${day.name}.`);
+  App.openModal(editDayModalHTML(day));
+}
+function swapExerciseInDay(dayId, idx, newExId){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  const newEx = exById(newExId);
+  const rx = prescriptionForCurrentProfile(newEx);
+  const old = day.exercises[idx];
+  day.exercises[idx] = {exerciseId: newExId, order: old.order, sets: rx.sets, reps: rx.reps, rest: rx.rest, rpeTarget: rx.rpe};
+  Storage.saveWorkoutPlan(plan);
+  Storage.clearWorkoutDraft(dayId);
+  App.showToast(`Swapped in ${newEx.name}.`);
+  App.openModal(editDayModalHTML(day));
+}
+
+function completeWorkout(dayId){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  const exercises = day.exercises.map((pe, idx)=>{
+    const topRep = parseInt((pe.reps.split('–')[1]||pe.reps.split('-')[1]||pe.reps).replace(/\D/g,'')) || 10;
+    const sets = [];
+    for(let n=1;n<=pe.sets;n++){
+      const w = document.getElementById(`w-${idx}-${n}`);
+      const r = document.getElementById(`r-${idx}-${n}`);
+      const rpe = document.getElementById(`rpe-${idx}-${n}`);
+      if(w && (w.value || r.value)){
+        sets.push({weight: parseFloat(w.value)||0, reps: parseFloat(r.value)||0, rpe: parseFloat(rpe.value)||null, pain: document.getElementById(`pain-${idx}`).checked});
+      }
+    }
+    return {exerciseId: pe.exerciseId, name: exById(pe.exerciseId).name, sets, targetTopRep: topRep, notes: (document.getElementById(`notes-${idx}`)||{}).value || ''};
+  }).filter(e=> e.sets.length>0);
+
+  if(exercises.length === 0){
+    App.showToast('Log at least one set before completing the workout.');
+    return;
+  }
+  const session = {
+    id: 'wo_'+Date.now(), date: todayISO(), planDayId: dayId, dayName: day.name,
+    startTime: App.state.workoutStartTime || new Date().toISOString(), endTime: new Date().toISOString(),
+    exercises, completed: true,
+  };
+  Storage.saveWorkoutSession(session);
+  Storage.clearWorkoutDraft(dayId);
+  App.state.workoutStartTime = null;
+  App.state.workoutStartTimeDayId = null;
+  App.showToast(`Workout complete — ${exercises.length} exercises logged.`);
+  App.go('dashboard');
+}
+
+/* =========================================================================
+   CALENDAR
+========================================================================= */
+function mondayOfThisWeek(){ const d = new Date(); const day = d.getDay(); const diff = (day===0?-6:1-day); d.setDate(d.getDate()+diff); d.setHours(0,0,0,0); return d; }
+function datesForCurrentWeek(){
+  const mon = mondayOfThisWeek();
+  const map = {};
+  WEEKDAYS.forEach((code,i)=>{ const d = new Date(mon); d.setDate(mon.getDate()+i); map[code] = localISODate(d); });
+  return map;
+}
+function renderCalendar(p){
+  const plan = Storage.getWorkoutPlan();
+  if(!plan) return `<div class="empty-state">No plan yet.</div>`;
+  const todayCode = todayWeekdayCode();
+  const todayStr = todayISO();
+  const weekDates = datesForCurrentWeek();
+  const hist = Storage.getWorkoutHistory();
+  const conflicts = checkScheduleConflicts(plan.days);
+
+  const cards = WEEKDAYS.map(code=>{
+    const day = plan.days.find(d=>d.weekday===code);
+    const isToday = code === todayCode;
+    const isRest = !day;
+    const cellDate = weekDates[code];
+    const isPast = cellDate < todayStr;
+    let session = null;
+    if(day) session = hist.find(h=> h.planDayId===day.id && h.date===cellDate) || null;
+    const isCompleted = session && session.completed;
+    const isSkipped = session && !session.completed && (session.status==='skipped'||session.status==='moved');
+    const isMissed = day && !session && isPast;
+    let badge = 'Upcoming', badgeStyle = '';
+    if(isRest){ badge='Rest'; }
+    if(isToday){ badge='Today'; badgeStyle='border-color:var(--ember);color:var(--ember);'; }
+    if(isCompleted){ badge='Completed'; badgeStyle='border-color:var(--good);color:var(--good);'; }
+    else if(isSkipped){ badge = session.status==='moved' ? 'Rescheduled' : 'Skipped'; badgeStyle='border-color:var(--amber);color:var(--amber);'; }
+    else if(isMissed){ badge='Missed'; badgeStyle='border-color:var(--danger);color:var(--danger);'; }
+
+    return `
+      <div class="card" draggable="${!isRest}" data-weekday="${code}"
+        ondragstart="event.dataTransfer.setData('text/plain','${code}')"
+        ondragover="event.preventDefault()"
+        ondrop="onCalendarDrop(event,'${code}')"
+        style="cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="cursor:pointer;flex:1;" onclick="${isRest ? `openRestDayModal('${cellDate}')` : `App.state.activeWorkoutDay='${day.id}';App.go('workout')`}">
+            <div style="font-size:12px;color:var(--text-dim);font-weight:700;">${WEEKDAY_FULL[code]}${isToday?' · Today':''}</div>
+            <div style="font-weight:700;font-size:16px;margin-top:2px;">${isRest?'Rest day':day.name}</div>
+            ${!isRest?`<div style="font-size:12px;color:var(--text-faint);margin-top:2px;">${day.exercises.length} exercises</div>`:`<div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Recovery & mobility</div>`}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+            <span class="pill" style="${badgeStyle}">${badge}</span>
+            ${!isRest?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openChangeDayModal('${day.id}')">Change day</button>`:''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const conflictBanner = conflicts.length ? `
+    <div class="card" style="margin-bottom:16px;border-color:var(--amber);">
+      <div style="font-weight:700;font-size:13.5px;margin-bottom:6px;">Recovery note</div>
+      ${conflicts.map(c=>`<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:4px;">${c} Consider spacing these out for better recovery — this is a suggestion, not a rule.</div>`).join('')}
+    </div>` : '';
+
+  return `<div class="fade-in">
+    <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:14px;">Split style: <strong style="color:var(--text)">${plan.style}</strong> · ${plan.daysPerWeek} days/week · drag a workout card onto another day to swap them, or use "Change day".</p>
+    ${conflictBanner}
+    <div class="grid" style="gap:12px;">${cards}</div>
+  </div>`;
+}
+function onCalendarDrop(event, targetWeekday){
+  event.preventDefault();
+  const sourceWeekday = event.dataTransfer.getData('text/plain');
+  if(!sourceWeekday || sourceWeekday === targetWeekday) return;
+  const plan = Storage.getWorkoutPlan();
+  const sourceDay = plan.days.find(d=>d.weekday===sourceWeekday);
+  if(!sourceDay) return;
+  swapPlanDayWeekday(plan, sourceDay.id, targetWeekday);
+  Storage.saveWorkoutPlan(plan);
+  const conflicts = checkScheduleConflicts(plan.days);
+  App.showToast(conflicts.length ? `Schedule updated. ${conflicts[0]}` : 'Schedule updated.');
+  render();
+}
+function openChangeDayModal(dayId){
+  const plan = Storage.getWorkoutPlan();
+  const day = plan.days.find(d=>d.id===dayId);
+  App.openModal(`
+    <h3 style="margin:0 0 10px;">Change day for ${day.name}</h3>
+    <p style="color:var(--text-dim);font-size:13.5px;margin:0 0 14px;">Currently on ${WEEKDAY_FULL[day.weekday]}. Choose a new day — if another workout is already there, the two will swap.</p>
+    <select id="change-day-select" class="input" style="margin-bottom:16px;">${WEEKDAYS.map(w=>`<option value="${w}" ${w===day.weekday?'selected':''}>${WEEKDAY_FULL[w]}</option>`).join('')}</select>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="applyChangeDay('${dayId}')">Save</button>
+      <button class="btn btn-ghost" onclick="App.closeModal()">Cancel</button>
+    </div>
+  `);
+}
+function applyChangeDay(dayId){
+  const newWeekday = document.getElementById('change-day-select').value;
+  const plan = Storage.getWorkoutPlan();
+  swapPlanDayWeekday(plan, dayId, newWeekday);
+  Storage.saveWorkoutPlan(plan);
+  const conflicts = checkScheduleConflicts(plan.days);
+  App.closeModal();
+  App.showToast(conflicts.length ? `Moved. ${conflicts[0]}` : 'Day changed.');
+}
+function openRestDayModal(dateStr){
+  App.openModal(`
+    <h3 style="margin:0 0 8px;">Rest day</h3>
+    <p style="color:var(--text-dim);font-size:13.5px;margin:0 0 14px;">Recommended: light walking, easy mobility, optional stretching, adequate hydration, nutrition, and sleep.</p>
+    <div class="grid grid-2">
+      <div class="field"><label class="field-label">Steps (optional)</label><input class="input" id="rest-steps" type="number" placeholder="e.g. 6000"></div>
+      <div class="field"><label class="field-label">Walking (minutes)</label><input class="input" id="rest-walk" type="number" placeholder="e.g. 20"></div>
+      <div class="field"><label class="field-label">Sleep hours</label><input class="input" id="rest-sleep" type="number" step="0.5" placeholder="7.5"></div>
+      <div class="field"><label class="field-label" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="rest-stretch"> Did some stretching</label></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px;">
+      <button class="btn btn-primary" onclick="saveRestDayLog('${dateStr}')">Save</button>
+      <button class="btn btn-ghost" onclick="App.closeModal()">Close</button>
+    </div>
+  `);
+}
+function saveRestDayLog(dateStr){
+  const steps = parseInt(document.getElementById('rest-steps').value)||null;
+  const walk = parseFloat(document.getElementById('rest-walk').value)||null;
+  const sleep = parseFloat(document.getElementById('rest-sleep').value)||null;
+  const stretched = document.getElementById('rest-stretch').checked;
+  Storage.saveRecoveryEntry({date: dateStr, sleepHours: sleep, soreness:null, energy:null, steps, walkMinutes: walk, stretched});
+  App.closeModal();
+  App.showToast('Rest day logged.');
+}
+
+/* =========================================================================
+   EXERCISE LIBRARY
+========================================================================= */
+function renderExercises(p){
+  const cats = ['All', ...CATEGORIES];
+  const equipmentOptions = ['All', ...Array.from(new Set(EXERCISES.map(e=>e.equipment)))];
+  const filtered = EXERCISES.filter(e=>{
+    const matchesCat = App.state.categoryFilter === 'All' || e.category === App.state.categoryFilter;
+    const matchesSearch = !App.state.exerciseFilter || e.name.toLowerCase().includes(App.state.exerciseFilter.toLowerCase());
+    const matchesEquip = App.state.equipmentFilter === 'All' || e.equipment === App.state.equipmentFilter;
+    const matchesDiff = App.state.difficultyFilter === 'All' || e.difficulty === App.state.difficultyFilter;
+    const matchesType = App.state.typeFilter === 'All' || (App.state.typeFilter==='Compound' ? e.type==='compound' : e.type==='isolation');
+    const matchesRegion = App.state.regionFilter === 'All' || e.region === App.state.regionFilter;
+    return matchesCat && matchesSearch && matchesEquip && matchesDiff && matchesType && matchesRegion;
+  });
+  return `
+    <div class="fade-in">
+      <input class="input" style="margin-bottom:14px;" placeholder="Search exercises…" value="${App.state.exerciseFilter}" oninput="App.state.exerciseFilter=this.value;render();">
+      <div class="chip-row" style="margin-bottom:10px;">
+        ${cats.map(c=>`<span class="chip ${App.state.categoryFilter===c?'active':''}" onclick="App.state.categoryFilter='${c}';render();">${c}</span>`).join('')}
+      </div>
+      <div class="grid grid-4" style="margin-bottom:16px;">
+        <div><label class="field-label">Equipment</label><select class="input" onchange="App.state.equipmentFilter=this.value;render();">${equipmentOptions.map(o=>`<option ${App.state.equipmentFilter===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div><label class="field-label">Difficulty</label><select class="input" onchange="App.state.difficultyFilter=this.value;render();">${['All','Beginner','Intermediate','Advanced'].map(o=>`<option ${App.state.difficultyFilter===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div><label class="field-label">Type</label><select class="input" onchange="App.state.typeFilter=this.value;render();">${['All','Compound','Isolation'].map(o=>`<option ${App.state.typeFilter===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div><label class="field-label">Body region</label><select class="input" onchange="App.state.regionFilter=this.value;render();">${['All','Upper','Lower','Core'].map(o=>`<option ${App.state.regionFilter===o?'selected':''}>${o}</option>`).join('')}</select></div>
+      </div>
+      ${filtered.length === 0 ? `<div class="empty-state">No exercises match your filters.</div>` : `<div class="grid grid-3">${filtered.map(e=>`
+        <div class="card" style="cursor:pointer;text-align:center;" onclick="openExerciseDetail('${e.id}')">
+          <div style="display:flex;justify-content:center;background:var(--surface-2);border-radius:12px;padding:8px;margin-bottom:10px;">${IMG(e, 84)}</div>
+          <div style="font-weight:700;font-size:14px;">${e.name}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">${e.target}</div>
+          <div style="font-size:11.5px;color:var(--text-faint);margin-top:2px;">${e.equipment}</div>
+          <div style="margin-top:8px;"><span class="badge-difficulty badge-${e.difficulty}">${e.difficulty}</span></div>
+        </div>
+      `).join('')}</div>`}
+    </div>
+  `;
+}
+function openExerciseDetail(id){
+  const e = exById(id);
+  const pat = PATTERNS[e.pattern] || PATTERNS.isometric;
+  const steps = pat.steps(e.name);
+  const cues = pat.cues;
+  const mistakesList = e.commonMistakesList.slice(0,4);
+  App.openModal(`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="pill" style="margin-bottom:8px;">${e.category} · ${e.type==='compound'?'Compound':'Isolation'}</div>
+        <h2 style="margin:0;font-size:20px;">${e.name}</h2>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="App.closeModal()">${ICONS.close}</button>
+    </div>
+
+    <div class="card-flat" style="margin:16px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-around;gap:6px;text-align:center;">
+        <div>
+          <div style="opacity:.6;">${IMG(e, 64)}</div>
+          <div style="font-size:11px;color:var(--text-dim);font-weight:700;margin-top:4px;">START</div>
+        </div>
+        <div style="color:var(--text-faint);font-size:20px;">→</div>
+        <div>
+          <div style="font-size:11px;color:var(--text-dim);font-weight:700;margin-bottom:4px;">MOVEMENT</div>
+          <div style="font-size:11.5px;color:var(--text-dim);max-width:90px;">${pat.direction}</div>
+        </div>
+        <div style="color:var(--text-faint);font-size:20px;">→</div>
+        <div>
+          ${IMG(e, 64)}
+          <div style="font-size:11px;color:var(--text-dim);font-weight:700;margin-top:4px;">FINISH</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--text-faint);margin-top:10px;">Schematic technique diagram — ember highlight = primary muscle, teal = secondary. Not a photo.</div>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:16px;">
+      <div class="card-flat"><div class="stat-label">Target</div><div style="font-weight:700;margin-top:4px;font-size:13.5px;">${e.target}</div></div>
+      <div class="card-flat"><div class="stat-label">Equipment</div><div style="font-weight:700;margin-top:4px;font-size:13.5px;">${e.equipment}</div></div>
+      <div class="card-flat"><div class="stat-label">Difficulty</div><div style="margin-top:4px;"><span class="badge-difficulty badge-${e.difficulty}">${e.difficulty}</span></div></div>
+    </div>
+
+    <h4 style="margin:16px 0 8px;">How to do it</h4>
+    <ol style="margin:0;padding-left:20px;color:var(--text-dim);font-size:13.5px;line-height:1.7;">
+      ${steps.map(s=>`<li>${s}</li>`).join('')}
+    </ol>
+
+    <h4 style="margin:18px 0 8px;">Form check</h4>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${cues.map(c=>`<div style="font-size:13.5px;color:var(--text-dim);"><span style="color:var(--good);font-weight:700;">✓</span> ${c}</div>`).join('')}
+    </div>
+
+    <h4 style="margin:18px 0 8px;">Common mistakes</h4>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${mistakesList.map(m=>`<div style="font-size:13.5px;color:var(--text-dim);"><span style="color:var(--danger);font-weight:700;">✗</span> ${m}</div>`).join('')}
+    </div>
+
+    <div class="grid grid-2" style="margin-top:18px;">
+      <div class="card-flat"><div class="stat-label">Muscles — primary</div><div style="font-weight:700;margin-top:4px;font-size:13px;color:var(--ember);">${e.primaryMuscles.join(', ')}</div></div>
+      <div class="card-flat"><div class="stat-label">Muscles — secondary</div><div style="margin-top:4px;font-size:13px;color:var(--teal);">${e.secondaryMuscles.length?e.secondaryMuscles.join(', '):'—'}</div></div>
+      <div class="card-flat"><div class="stat-label">Breathing</div><div style="margin-top:4px;font-size:13px;">${pat.breathing}</div></div>
+      <div class="card-flat"><div class="stat-label">Tempo</div><div style="margin-top:4px;font-size:13px;">Lower ~2 sec · optional pause · lift with control</div></div>
+    </div>
+
+    <div class="card-flat" style="margin-top:12px;">
+      <div class="stat-label">Range of motion</div>
+      <div style="font-size:13px;margin-top:4px;color:var(--text-dim);">Use a comfortable range of motion you can fully control while keeping good form — don't force extreme ranges your mobility doesn't allow.</div>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:14px;">
+      <div class="card-flat"><div class="stat-label">Beginner alt.</div><div style="margin-top:4px;font-size:13px;">${e.beginnerAlt}</div></div>
+      <div class="card-flat"><div class="stat-label">Progression</div><div style="margin-top:4px;font-size:13px;">${e.progression}</div></div>
+      <div class="card-flat"><div class="stat-label">Regression</div><div style="margin-top:4px;font-size:13px;">${e.regression}</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-top:10px;">When to increase weight: if you complete all prescribed reps with good form at roughly the target RPE, consider a small increase next session. Don't increase if form breaks down.</div>
+
+    <div class="card-flat" style="margin-top:14px;background:var(--surface-2);">
+      <div style="font-size:12px;color:var(--text-faint);">Start with a weight you can control. Prioritize technique over weight. Stop if you experience sharp or unusual pain. Any weight shown elsewhere in this app is only an example — it does not tell you what to lift.</div>
+    </div>
+  `);
+}
+
+/* =========================================================================
+   STRETCHING
+========================================================================= */
+function renderStretching(p){
+  return `
+    <div class="fade-in">
+      <div class="card" style="margin-bottom:20px;background:var(--surface-2);">
+        <p style="margin:0;font-size:13.5px;color:var(--text-dim);">Stretching should create mild tension, not sharp pain. Stop if you experience pain, numbness, dizziness, or unusual symptoms.</p>
+      </div>
+
+      <h3 class="font-display" style="font-size:17px;margin-bottom:6px;">Before workout — dynamic warm-up</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin:0 0 14px;">Dynamic movements are generally better before training than long static holds.</p>
+      <div class="grid grid-2" style="margin-bottom:26px;">
+        ${DYNAMIC_WARMUPS.map(w=>`
+          <div class="card" style="display:flex;gap:12px;">
+            <div style="flex-shrink:0;background:var(--surface-2);border-radius:10px;padding:4px;">${bodyDiagramSVG(w.view, w.primary, w.secondary||[], 40)}</div>
+            <div>
+              <div style="font-weight:700;font-size:14.5px;">${w.name}</div>
+              <div style="font-size:12.5px;color:var(--text-dim);margin-top:4px;">${w.how}</div>
+              <div class="pill" style="margin-top:8px;">${w.reps}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <h3 class="font-display" style="font-size:17px;margin-bottom:6px;">After workout — static stretching</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin:0 0 14px;">Hold each stretch to the point of mild tension, breathing slowly throughout.</p>
+      <div class="grid grid-2">
+        ${STATIC_STRETCHES.map(s=>`
+          <div class="card">
+            <div style="display:flex;gap:12px;">
+              <div style="flex-shrink:0;background:var(--surface-2);border-radius:10px;padding:4px;">${bodyDiagramSVG(s.view, s.primary, [], 44)}</div>
+              <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                  <div style="font-weight:700;font-size:14.5px;">${s.name}</div>
+                  <span class="pill">${s.target}</span>
+                </div>
+                <ol style="margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--text-dim);line-height:1.6;">
+                  <li>Get into position: ${s.how}</li>
+                  <li>Hold at a point of mild, comfortable tension.</li>
+                  <li>Release slowly and repeat for the second set.</li>
+                </ol>
+              </div>
+            </div>
+            <div class="grid grid-2" style="margin-top:10px;">
+              <div class="card-flat"><div class="stat-label">Duration</div><div style="font-size:13px;font-weight:700;margin-top:2px;">${s.duration} × ${s.sets}</div></div>
+              <div class="card-flat"><div class="stat-label">Breathing</div><div style="font-size:12px;margin-top:2px;">${s.breathing}</div></div>
+            </div>
+            <div style="font-size:11.5px;color:var(--text-faint);margin-top:10px;">Common mistake: ${s.mistakes}</div>
+            <div style="font-size:11.5px;color:var(--danger);margin-top:4px;">Stop if: ${s.stop}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   PROGRESS
+========================================================================= */
+function renderProgress(p){
+  const tab = App.state.progressTab;
+  const measurements = Storage.getBodyMeasurements();
+  return `
+    <div class="fade-in">
+      <div class="tabs-row">
+        <div class="tab ${tab==='body'?'active':''}" onclick="App.state.progressTab='body';render();">Body</div>
+        <div class="tab ${tab==='strength'?'active':''}" onclick="App.state.progressTab='strength';render();">Strength</div>
+        <div class="tab ${tab==='habits'?'active':''}" onclick="App.state.progressTab='habits';render();">Habits</div>
+      </div>
+      ${tab==='body' ? renderProgressBody(p, measurements) : ''}
+      ${tab==='strength' ? renderProgressStrength(p) : ''}
+      ${tab==='habits' ? renderProgressHabits(p) : ''}
+    </div>
+  `;
+}
+function renderProgressBody(p, measurements){
+  return `
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;font-size:15px;">Record a measurement</h3>
+      </div>
+      <div class="grid grid-3">
+        <div class="field"><label class="field-label">Weight (kg)</label><input class="input" id="m-weight" type="number" step="0.1" placeholder="${p.weight}"></div>
+        <div class="field"><label class="field-label">Waist (cm)</label><input class="input" id="m-waist" type="number" step="0.1" placeholder="optional"></div>
+        <div class="field"><label class="field-label">Body fat %</label><input class="input" id="m-bf" type="number" step="0.1" placeholder="optional"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveMeasurement()">Save measurement</button>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:16px;">
+      <div class="card"><h4 style="margin:0 0 10px;font-size:13.5px;color:var(--text-dim);">Weight trend</h4><canvas id="chart-weight" height="180"></canvas></div>
+      <div class="card"><h4 style="margin:0 0 10px;font-size:13.5px;color:var(--text-dim);">Body fat % trend</h4><canvas id="chart-bf" height="180"></canvas></div>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 10px;font-size:13.5px;color:var(--text-dim);">History</h4>
+      ${measurements.length===0 ? `<div class="empty-state">No measurements yet — add your first one above.</div>` :
+      measurements.slice().reverse().map(m=>`
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <span style="color:var(--text-dim);">${m.date}</span>
+          <span>${m.weight} kg${m.waist?' · waist '+m.waist+'cm':''}${m.bodyFat?' · '+m.bodyFat+'% BF':''}</span>
+        </div>`).join('')}
+    </div>
+  `;
+}
+function renderProgressStrength(p){
+  const trackedIds = ['benchPress','squat','rdl','latPulldown','ohp','legPress'];
+  return `
+    <div class="grid grid-2">
+      ${trackedIds.map(id=>{
+        const ex = exById(id);
+        const hist = Storage.getExerciseHistory(id);
+        const best = hist.length ? Math.max(...hist.flatMap(h=>h.sets.map(s=>s.weight))) : null;
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;"><div style="font-weight:700;font-size:14px;">${ex.name}</div><span class="pill">${best?best+' kg PR':'No data'}</span></div>
+          <canvas id="chart-${id}" height="140" style="margin-top:10px;"></canvas>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+function renderProgressHabits(p){
+  const hist = Storage.getWorkoutHistory();
+  const recovery = Storage.getRecoveryLog();
+  const completedTotal = hist.filter(h=>h.completed).length;
+  const avgSleep = recovery.length ? (recovery.reduce((a,r)=>a+(r.sleepHours||0),0)/recovery.filter(r=>r.sleepHours).length || 0) : 0;
+  return `
+    <div class="grid grid-4" style="margin-bottom:16px;">
+      <div class="card"><div class="stat-num">${completedTotal}</div><div class="stat-label">Workouts completed</div></div>
+      <div class="card"><div class="stat-num">${avgSleep? avgSleep.toFixed(1):'—'}</div><div class="stat-label">Avg sleep (hrs)</div></div>
+      <div class="card"><div class="stat-num">${recovery.length}</div><div class="stat-label">Recovery check-ins</div></div>
+      <div class="card"><div class="stat-num">${Storage.getBodyMeasurements().length}</div><div class="stat-label">Measurements logged</div></div>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 10px;font-size:13.5px;color:var(--text-dim);">Weekly consistency</h4>
+      <canvas id="chart-consistency" height="160"></canvas>
+    </div>
+  `;
+}
+function saveMeasurement(){
+  const weight = parseFloat(document.getElementById('m-weight').value);
+  const waist = parseFloat(document.getElementById('m-waist').value);
+  const bf = parseFloat(document.getElementById('m-bf').value);
+  if(!weight && !waist && !bf){ App.showToast('Enter at least one value'); return; }
+  const p = Storage.getUserProfile();
+  Storage.saveBodyMeasurement({date: todayISO(), weight: weight || p.weight, waist: waist||'', bodyFat: isNaN(bf)?'':bf});
+  App.showToast('Measurement saved');
+  render();
+}
+let chartInstances = {};
+function initProgressCharts(){
+  Object.values(chartInstances).forEach(c=>{ try{c.destroy();}catch(e){} });
+  chartInstances = {};
+  const css = getComputedStyle(document.documentElement);
+  const gridColor = css.getPropertyValue('--border').trim();
+  const textColor = css.getPropertyValue('--text-dim').trim();
+  const emberColor = css.getPropertyValue('--ember').trim();
+  const tealColor = css.getPropertyValue('--teal').trim();
+  Chart.defaults.color = textColor;
+  Chart.defaults.borderColor = gridColor;
+  Chart.defaults.font.family = "Inter";
+
+  const measurements = Storage.getBodyMeasurements();
+  const wCanvas = document.getElementById('chart-weight');
+  if(wCanvas){
+    chartInstances.weight = new Chart(wCanvas, {type:'line', data:{labels: measurements.map(m=>m.date), datasets:[{data: measurements.map(m=>m.weight), borderColor: emberColor, backgroundColor:'transparent', tension:.3}]}, options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false}}}});
+  }
+  const bfCanvas = document.getElementById('chart-bf');
+  if(bfCanvas){
+    const bfData = measurements.filter(m=>m.bodyFat!=='' && m.bodyFat!=null);
+    chartInstances.bf = new Chart(bfCanvas, {type:'line', data:{labels: bfData.map(m=>m.date), datasets:[{data: bfData.map(m=>m.bodyFat), borderColor: tealColor, backgroundColor:'transparent', tension:.3}]}, options:{plugins:{legend:{display:false}}}});
+  }
+  ['benchPress','squat','rdl','latPulldown','ohp','legPress'].forEach(id=>{
+    const c = document.getElementById('chart-'+id);
+    if(!c) return;
+    const hist = Storage.getExerciseHistory(id);
+    chartInstances[id] = new Chart(c, {type:'line', data:{labels: hist.map(h=>h.date), datasets:[{data: hist.map(h=>Math.max(...h.sets.map(s=>s.weight))), borderColor: emberColor, backgroundColor:'transparent', tension:.3}]}, options:{plugins:{legend:{display:false}}}});
+  });
+  const consistencyCanvas = document.getElementById('chart-consistency');
+  if(consistencyCanvas){
+    const hist = Storage.getWorkoutHistory().filter(h=>h.completed);
+    const byWeek = {};
+    hist.forEach(h=>{
+      const d = parseLocalDate(h.date);
+      const week = getWeekKey(d);
+      byWeek[week] = (byWeek[week]||0)+1;
+    });
+    const weeks = Object.keys(byWeek).sort();
+    chartInstances.consistency = new Chart(consistencyCanvas, {type:'bar', data:{labels: weeks, datasets:[{data: weeks.map(w=>byWeek[w]), backgroundColor: emberColor, borderRadius:6}]}, options:{plugins:{legend:{display:false}}}});
+  }
+}
+function getWeekKey(d){
+  const onejan = new Date(d.getFullYear(),0,1);
+  const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
+  return d.getFullYear()+'-W'+week;
+}
+
+/* =========================================================================
+   PROFILE + SETTINGS
+========================================================================= */
+function renderProfile(p){
+  const draft = App.state.profileDraft || {...p};
+  App.state.profileDraft = draft;
+  return `
+    <div class="fade-in">
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="margin:0 0 16px;font-size:15.5px;">Your profile</h3>
+        <div class="grid grid-2">
+          <div class="field"><label class="field-label">Name</label><input class="input" value="${escapeHtml(draft.name||'')}" oninput="App.state.profileDraft.name=this.value"></div>
+          <div class="field"><label class="field-label">Age</label><input class="input" type="number" value="${draft.age}" oninput="App.state.profileDraft.age=this.value"></div>
+          <div class="field"><label class="field-label">Gender</label>
+            <select oninput="App.state.profileDraft.gender=this.value">
+              ${['Male','Female','Prefer not to say'].map(g=>`<option ${draft.gender===g?'selected':''}>${g}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label class="field-label">Height (cm)</label><input class="input" type="number" value="${draft.height}" oninput="App.state.profileDraft.height=this.value"></div>
+          <div class="field"><label class="field-label">Weight (kg)</label><input class="input" type="number" value="${draft.weight}" oninput="App.state.profileDraft.weight=this.value"></div>
+          <div class="field"><label class="field-label">Body fat % (optional)</label><input class="input" type="number" value="${draft.bodyFat||''}" oninput="App.state.profileDraft.bodyFat=this.value"></div>
+          <div class="field"><label class="field-label">Target body fat % (optional)</label><input class="input" type="number" value="${draft.targetBodyFat||''}" oninput="App.state.profileDraft.targetBodyFat=this.value"></div>
+        </div>
+
+        <div class="field"><label class="field-label">Goal</label>
+          <div class="chip-row">${['Lose fat','Build muscle','Lose fat + build muscle','Maintain weight'].map(g=>`<span class="chip ${draft.goal===g?'active':''}" onclick="App.state.profileDraft.goal='${g}';render();">${g}</span>`).join('')}</div>
+        </div>
+        <div class="field"><label class="field-label">Training experience</label>
+          <div class="chip-row">${['Beginner','Intermediate','Advanced'].map(g=>`<span class="chip ${draft.experience===g?'active':''}" onclick="App.state.profileDraft.experience='${g}';render();">${g}</span>`).join('')}</div>
+        </div>
+        <div class="field"><label class="field-label">Days available per week</label>
+          <div class="chip-row">${[2,3,4,5,6].map(g=>`<span class="chip ${draft.daysPerWeek==g?'active':''}" onclick="App.state.profileDraft.daysPerWeek=${g};render();">${g}</span>`).join('')}</div>
+        </div>
+        <div class="field"><label class="field-label">Average workout duration</label>
+          <div class="chip-row">${[30,45,60,90].map(g=>`<span class="chip ${draft.duration==g?'active':''}" onclick="App.state.profileDraft.duration=${g};render();">${g} min</span>`).join('')}</div>
+        </div>
+        <div class="field"><label class="field-label">Gym equipment</label>
+          <div class="chip-row">${['Full gym','Dumbbells','Machines','Barbell','Home equipment'].map(g=>`<span class="chip ${draft.equipment===g?'active':''}" onclick="App.state.profileDraft.equipment='${g}';render();">${g}</span>`).join('')}</div>
+        </div>
+        <div class="field"><label class="field-label">Preferred training style</label>
+          <div class="chip-row">${['Full Body','Upper/Lower','Push/Pull/Legs','Custom'].map(g=>`<span class="chip ${draft.style===g?'active':''}" onclick="App.state.profileDraft.style='${g}';render();">${g}</span>`).join('')}</div>
+        </div>
+
+        <div class="divider"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="saveProfileAndRegenerate()">Save profile & regenerate plan</button>
+          <button class="btn btn-ghost" onclick="saveProfileOnly()">Save profile only</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="margin:0 0 12px;font-size:15.5px;">Nutrition targets</h3>
+        <div class="grid grid-2">
+          <div class="field"><label class="field-label">Custom calorie target (optional)</label><input class="input" type="number" value="${draft.customCalories||''}" oninput="App.state.profileDraft.customCalories=this.value" placeholder="Auto: ${calcCalorieTarget(p)} kcal"></div>
+          <div class="field"><label class="field-label">Custom protein range g (low-high, optional)</label>
+            <div style="display:flex;gap:8px;">
+              <input class="input" type="number" value="${draft.customProteinLow||''}" oninput="App.state.profileDraft.customProteinLow=this.value" placeholder="low">
+              <input class="input" type="number" value="${draft.customProteinHigh||''}" oninput="App.state.profileDraft.customProteinHigh=this.value" placeholder="high">
+            </div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-faint);margin:6px 0 0;">Calorie and protein estimates are approximate; individual needs vary. Emphasize whole foods, adequate hydration and sleep alongside these targets.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="margin:0 0 4px;font-size:15.5px;">Data management & sync</h3>
+        <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 6px;">
+          ${Cloud.db
+            ? 'You\'re signed in, so your profile, plan, and history sync automatically to any device where you open this app while signed in to the same account — no separate username or password needed. A copy is also cached locally on this device for instant loading.'
+            : 'Cloud sync isn\'t available in this view, so your data is currently stored only on this browser/device. Use export/import below to move it to another device.'}
+        </p>
+        <p style="font-size:11.5px;color:var(--text-faint);margin:0 0 14px;">This app link is private to your account. If you ever share it with someone else, note that shared data (not per-person accounts) would then be visible to anyone you share it with.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="exportData()">Export my data</button>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;">Import backup<input type="file" accept="application/json" style="display:none" onchange="importData(event)"></label>
+          <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset all data</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p style="font-size:12.5px;color:var(--text-dim);margin:0;">Stop an exercise if you experience sharp pain or unusual symptoms. If you have an injury, medical condition, or are unsure whether an exercise is appropriate for you, consult a qualified healthcare professional. Suggested weights are starting points, not a test of strength — choose a load that allows controlled repetitions with good technique.</p>
+      </div>
+    </div>
+  `;
+}
+function saveProfileOnly(){
+  Storage.saveUserProfile(App.state.profileDraft);
+  App.showToast('Profile saved');
+  render();
+}
+function saveProfileAndRegenerate(){
+  Storage.saveUserProfile(App.state.profileDraft);
+  const plan = generatePlan(App.state.profileDraft);
+  Storage.saveWorkoutPlan(plan);
+  // If a 2-day schedule made a true Push/Pull/Legs split impossible (no room for a leg day),
+  // generatePlan silently falls back to a balanced Full Body pair — say so, rather than
+  // leaving the person wondering why their plan doesn't match what they picked.
+  const requestedStyle = App.state.profileDraft.style;
+  if(requestedStyle && requestedStyle !== 'Custom' && plan.style !== requestedStyle){
+    App.showToast(`Saved. With only ${plan.daysPerWeek} day(s)/week, "${requestedStyle}" can't include every muscle group, so we used a balanced "${plan.style}" split instead.`);
+  } else {
+    App.showToast('Profile saved and plan regenerated.');
+  }
+  App.go('dashboard');
+}
+function exportData(){
+  const data = Storage.exportAll();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `gym-workout-backup-${todayISO()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  App.showToast('Backup exported');
+}
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const obj = JSON.parse(reader.result);
+      if(!obj.dataVersion) throw new Error('Not a valid backup file');
+      // BUG FIX (QA audit): this used to inline the whole backup as JSON text inside an
+      // HTML onclick="" attribute. Any real backup contains quotes, which broke out of the
+      // attribute and corrupted the modal markup — import essentially never worked on a
+      // genuine backup file. Stashing the parsed object on App.state instead avoids ever
+      // serializing untrusted data into HTML.
+      App.state.pendingImport = obj;
+      App.openModal(`
+        <h3 style="margin:0 0 10px;">Import backup?</h3>
+        <p style="color:var(--text-dim);font-size:14px;">This will overwrite your current profile, workout history, and measurements with the contents of this backup file.</p>
+        <div style="display:flex;gap:10px;margin-top:18px;">
+          <button class="btn btn-primary" onclick="confirmImport()">Import</button>
+          <button class="btn btn-ghost" onclick="App.state.pendingImport=null;App.closeModal()">Cancel</button>
+        </div>
+      `);
+    }catch(e){
+      App.showToast('Invalid backup file');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+function confirmImport(){
+  const obj = App.state.pendingImport;
+  App.state.pendingImport = null;
+  if(!obj){ App.showToast('Nothing to import.'); return; }
+  Storage.importAll(obj);
+  App.closeModal();
+  App.showToast('Import successful. Your workout history has been restored.');
+  App.state.profileDraft = null;
+  App.go('dashboard');
+}
+function confirmReset(){
+  App.openModal(`
+    <h3 style="margin:0 0 10px;color:var(--danger);">Reset all data?</h3>
+    <p style="color:var(--text-dim);font-size:14px;">This will permanently delete your profile, workout history, body measurements, exercise progression, and settings from this browser. This action cannot be undone.</p>
+    <div style="display:flex;gap:10px;margin-top:18px;">
+      <button class="btn btn-danger" onclick="confirmReset2()">Continue</button>
+      <button class="btn btn-ghost" onclick="App.closeModal()">Cancel</button>
+    </div>
+  `);
+}
+function confirmReset2(){
+  App.openModal(`
+    <h3 style="margin:0 0 10px;color:var(--danger);">Are you absolutely sure?</h3>
+    <p style="color:var(--text-dim);font-size:14px;">This is your final confirmation. All local data will be erased.</p>
+    <div style="display:flex;gap:10px;margin-top:18px;">
+      <button class="btn btn-danger" onclick="doReset()">Yes, delete everything</button>
+      <button class="btn btn-ghost" onclick="App.closeModal()">Cancel</button>
+    </div>
+  `);
+}
+function doReset(){
+  Storage.resetAll();
+  // Re-seed synchronously before closing the modal, since closeModal() now force-renders —
+  // without this, that render would run against completely empty storage.
+  const profile = App.defaultProfile();
+  writeJSON(LS.PROFILE, profile);
+  writeJSON(LS.PLAN, generatePlan(profile));
+  App.state.profileDraft = null;
+  App.closeModal();
+  App.init();
+  App.showToast('All data has been reset');
+}
+
+/* =========================================================================
+   HELP SECTION + AI ASSISTANT (sample capability)
+   Static FAQ for the common questions, plus an optional live "ask Claude"
+   chat and an AI-assisted exercise creator for anything missing from the
+   built-in library. Degrades gracefully to just the FAQ if `sample` isn't
+   granted in this view.
+========================================================================= */
+let __sampleCap = null, __sampleChecked = false;
+async function getSample(){
+  if(!__sampleChecked){
+    try{ __sampleCap = (typeof claude !== 'undefined') ? await claude.use('sample') : null; }
+    catch(e){ __sampleCap = null; }
+    __sampleChecked = true;
+  }
+  return __sampleCap;
+}
+function openHelpModal(){
+  App.openModal(helpModalHTML());
+}
+function helpModalHTML(){
+  const tab = App.state.helpTab;
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h2 style="margin:0;font-size:19px;">Help</h2>
+      <button class="btn btn-ghost btn-sm" onclick="App.closeModal()">${ICONS.close}</button>
+    </div>
+    <div class="tabs-row">
+      <div class="tab ${tab==='faq'?'active':''}" onclick="App.state.helpTab='faq';App.openModal(helpModalHTML())">FAQ</div>
+      <div class="tab ${tab==='ask'?'active':''}" onclick="App.state.helpTab='ask';App.openModal(helpModalHTML())">Ask a question</div>
+      <div class="tab ${tab==='addExercise'?'active':''}" onclick="App.state.helpTab='addExercise';App.openModal(helpModalHTML())">Can't find an exercise?</div>
+    </div>
+    ${tab==='faq' ? faqTabHTML() : tab==='ask' ? askTabHTML() : addExerciseTabHTML()}
+  `;
+}
+function faqTabHTML(){
+  const faqs = [
+    ['How does the workout generator work?', 'Based on your training days and style (Full Body, Upper/Lower, or Push/Pull/Legs), the app cycles through a fixed rotation of templates so each day hits different muscles while staying the same week to week — that consistency is what lets it track your progress on each exercise.'],
+    ['How does progressive overload work?', 'After you log a set, it compares your reps and RPE to the target. Hit the top of the rep range at RPE 8 or below and it suggests a small weight increase next time. Struggle, or report pain, and it holds or lowers the weight instead — it never pushes weight over pain or poor form.'],
+    ['Can I change the exercises in a day?', 'Yes — open a workout and tap "Edit exercises" to add, remove, or swap any exercise for that day. This never changes your saved history.'],
+    ['Can I change which days I train?', 'Yes — on the Calendar, drag a workout onto a different day, or use "Change day" on any workout card. Your profile\'s day/style settings only matter when you regenerate the whole plan.'],
+    ['How is my data stored?', 'It\'s cached on this device for instant loading, and — when cloud sync is available — also saved to your account so the same profile and history follow you to other signed-in devices.'],
+    ['What if I miss a workout?', 'Nothing shifts automatically. The Dashboard will ask what you\'d like to do (move it, skip it, or reschedule your week) so you stay in control of your own recovery.'],
+  ];
+  return `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${faqs.map(([q,a])=>`
+        <div class="card-flat">
+          <div style="font-weight:700;font-size:13.5px;margin-bottom:4px;">${q}</div>
+          <div style="font-size:12.5px;color:var(--text-dim);">${a}</div>
+        </div>`).join('')}
+    </div>
+  `;
+}
+function askTabHTML(){
+  const chat = App.state.helpChat;
+  return `
+    <div id="help-chat-log" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
+      ${chat.length===0 ? `<div style="font-size:12.5px;color:var(--text-faint);">Ask anything about training, your plan, or the app — e.g. "is 3 days a week enough?" or "why did my recommended weight go up?"</div>` : chat.filter(m=>m.role!=='context').map(m=>`
+        <div class="chat-bubble ${m.role==='user'?'chat-bubble-user':'chat-bubble-assistant'}">${escapeHtml(m.content)}</div>`).join('')}
+      ${App.state.helpAsking ? `<div class="chat-bubble chat-bubble-assistant" style="color:var(--text-dim);">Thinking…</div>` : ''}
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input class="input" id="help-question-input" placeholder="Type your question…" onkeydown="if(event.key==='Enter'){event.preventDefault();sendHelpQuestion();}">
+      <button class="btn btn-primary btn-sm" onclick="sendHelpQuestion()" ${App.state.helpAsking?'disabled':''}>Ask</button>
+    </div>
+  `;
+}
+function scrollHelpChatToBottom(){
+  const log = document.getElementById('help-chat-log');
+  if(log) log.scrollTop = log.scrollHeight;
+}
+async function sendHelpQuestion(){
+  const input = document.getElementById('help-question-input');
+  const q = (input.value || '').trim();
+  if(!q || App.state.helpAsking) return;
+  input.value = '';
+  App.state.helpChat.push({role:'user', content:q});
+  App.state.helpAsking = true;
+  App.openModal(helpModalHTML());
+  scrollHelpChatToBottom();
+
+  const sample = await getSample();
+  if(!sample){
+    App.state.helpChat.push({role:'assistant', content:"I can't reach Claude for live answers from this view right now — try the FAQ tab, or ask me directly in the main chat where you're editing this app."});
+    App.state.helpAsking = false;
+    App.openModal(helpModalHTML());
+    scrollHelpChatToBottom();
+    return;
+  }
+  const profile = Storage.getUserProfile();
+  const plan = Storage.getWorkoutPlan();
+  const context = `You are a concise, encouraging, safety-conscious fitness assistant embedded inside a personal gym workout planner app called Ironline. Answer in a few short sentences, not an essay. Ground answers in general, sustainable training practice; never give a medical diagnosis and suggest seeing a qualified professional for pain, injury, or medical concerns. If asked something unrelated to fitness or this app, answer briefly and steer back.
+The person's profile: goal="${profile.goal}", experience="${profile.experience}", days/week=${profile.daysPerWeek}, plan style="${plan?plan.style:'none yet'}".
+Their current plan days: ${plan ? plan.days.map(d=>d.name).join(', ') : 'none yet'}.`;
+  const turns = [{role:'user', content:context}, ...App.state.helpChat.filter(m=>m.role!=='context').map(m=>({role:m.role, content:m.content}))];
+  try{
+    const {text} = await sample(turns, {
+      modelTier:'quick',
+      onText: ({text})=>{
+        const last = App.state.helpChat[App.state.helpChat.length-1];
+        if(!last || last.role!=='assistant' || !last.streaming) App.state.helpChat.push({role:'assistant', content:text, streaming:true});
+        else last.content = text;
+        App.openModal(helpModalHTML());
+        scrollHelpChatToBottom();
+      }
+    });
+    const last = App.state.helpChat[App.state.helpChat.length-1];
+    if(last && last.streaming){ last.content = text; delete last.streaming; }
+    else App.state.helpChat.push({role:'assistant', content:text});
+  }catch(e){
+    App.state.helpChat.push({role:'assistant', content: e.code==='not_granted' ? "I can't answer without permission to use Claude in this view — the FAQ tab still works." : "Sorry, I couldn't get an answer just now — please try again."});
+  }
+  App.state.helpAsking = false;
+  App.openModal(helpModalHTML());
+  scrollHelpChatToBottom();
+}
+
+function addExerciseTabHTML(){
+  const suggestion = App.state.exerciseSuggestion;
+  return `
+    <p style="font-size:12.5px;color:var(--text-dim);margin:0 0 10px;">Describe the exercise you're looking for — Claude will draft a full library entry (target muscles, setup, cues) for you to review before it's added.</p>
+    <textarea class="input" id="exercise-desc-input" placeholder="e.g. 'cable lateral raise with a rope attachment' or 'sissy squat'" style="margin-bottom:10px;min-height:70px;">${escapeHtml(App.state.exerciseDraftInput||'')}</textarea>
+    <button class="btn btn-primary" style="width:100%;" onclick="generateExerciseSuggestion()" ${App.state.exerciseGenerating?'disabled':''}>${App.state.exerciseGenerating?'Thinking…':'Suggest this exercise'}</button>
+    ${suggestion ? exerciseSuggestionPreviewHTML(suggestion) : ''}
+  `;
+}
+async function generateExerciseSuggestion(){
+  const input = document.getElementById('exercise-desc-input');
+  App.state.exerciseDraftInput = input.value;
+  const desc = (input.value || '').trim();
+  if(!desc){ App.showToast('Describe the exercise first.'); return; }
+  const sample = await getSample();
+  if(!sample){ App.showToast("Can't reach Claude for this from this view right now."); return; }
+  App.state.exerciseGenerating = true;
+  App.state.exerciseSuggestion = null;
+  App.openModal(helpModalHTML());
+  const prompt = `Define one strength-training exercise for a beginner-friendly gym app, based on this description: "${desc}".
+Reply with ONLY a JSON object with exactly these fields — no other text:
+{"name": string, "category": one of ${JSON.stringify(CATEGORIES)}, "type": "compound" or "isolation",
+ "target": string (primary muscle(s), comma-separated), "secondary": string (secondary muscles, comma-separated, or "—"),
+ "equipment": one of ${JSON.stringify(['Full gym','Dumbbells','Machines','Barbell','Home equipment'])},
+ "difficulty": "Beginner" or "Intermediate" or "Advanced",
+ "instructions": string (1-2 sentences, how to perform it), "mistakes": string (one sentence, the single most common mistake),
+ "beginnerAlt": string (an easier alternative exercise name, or "—"), "progression": string (how to make it harder later),
+ "regression": string (how to make it easier), "pattern": one of ${JSON.stringify(Object.keys(PATTERNS))} (pick by the actual movement: pressing away from the body = horizontal-press/vertical-press/incline-press, pulling toward the body = vertical-pull/horizontal-pull, knee-dominant = squat, hip-hinge = hinge, elbow curl = curl, static hold = isometric, etc.)}
+If the description is not a real, safe strength exercise, instead reply with only {"error": "one short sentence why"}.`;
+  try{
+    const data = await sample.json(prompt, {modelTier:'quick'});
+    if(data && data.error){
+      App.showToast(String(data.error));
+    } else if(data && data.name && data.category){
+      // Never trust the model's output blindly — clamp every field to a known-safe value.
+      data.category = CATEGORIES.includes(data.category) ? data.category : 'Core';
+      data.type = data.type === 'compound' ? 'compound' : 'isolation';
+      data.equipment = ['Full gym','Dumbbells','Machines','Barbell','Home equipment'].includes(data.equipment) ? data.equipment : 'Full gym';
+      data.difficulty = ['Beginner','Intermediate','Advanced'].includes(data.difficulty) ? data.difficulty : 'Beginner';
+      data.pattern = PATTERNS[data.pattern] ? data.pattern : 'isometric';
+      data.target = String(data.target || 'Muscles worked').slice(0,80);
+      data.secondary = String(data.secondary || '—').slice(0,80);
+      data.instructions = String(data.instructions || 'Perform with control, prioritizing good technique over weight.').slice(0,400);
+      data.mistakes = String(data.mistakes || 'Using more weight than can be controlled with good form.').slice(0,200);
+      data.beginnerAlt = String(data.beginnerAlt || '—').slice(0,60);
+      data.progression = String(data.progression || 'Increase load slightly once the full rep range feels controlled.').slice(0,200);
+      data.regression = String(data.regression || 'Reduce load or range of motion.').slice(0,200);
+      data.name = String(data.name).slice(0,60);
+      App.state.exerciseSuggestion = data;
+    } else {
+      App.showToast("Couldn't parse a suggestion — try describing it differently.");
+    }
+  }catch(e){
+    App.showToast(e.code==='not_granted' ? 'Permission to ask Claude was declined.' : "Couldn't generate a suggestion — try again or rephrase.");
+  }
+  App.state.exerciseGenerating = false;
+  App.openModal(helpModalHTML());
+}
+function exerciseSuggestionPreviewHTML(data){
+  const view = BACK_VIEW_CATEGORIES.has(data.category) ? 'back' : 'front';
+  const primary = data.target.split(',').map(s=>s.trim());
+  const secondary = (!data.secondary || data.secondary === '—') ? [] : data.secondary.split(',').map(s=>s.trim());
+  return `
+    <div class="card" style="margin-top:14px;">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex-shrink:0;background:var(--surface-2);border-radius:10px;padding:4px;">${bodyDiagramSVG(view, primary, secondary, 56)}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="pill" style="margin-bottom:6px;">${escapeHtml(data.category)} · ${data.type==='compound'?'Compound':'Isolation'}</div>
+          <div style="font-weight:700;font-size:15px;">${escapeHtml(data.name)}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">${escapeHtml(data.target)} · ${escapeHtml(data.equipment)}</div>
+        </div>
+        <span class="badge-difficulty badge-${data.difficulty}">${data.difficulty}</span>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px;"><strong style="color:var(--text)">How to do it:</strong> ${escapeHtml(data.instructions)}</div>
+      <div style="font-size:12.5px;color:var(--text-dim);"><strong style="color:var(--text)">Watch out for:</strong> ${escapeHtml(data.mistakes)}</div>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="confirmAddSuggestedExercise()">Add to my library</button>
+        <button class="btn btn-ghost" onclick="App.state.exerciseSuggestion=null;App.openModal(helpModalHTML())">Discard</button>
+      </div>
+      <p style="font-size:11px;color:var(--text-faint);margin-top:10px;">AI-drafted — review before adding, especially for unfamiliar equipment or technique. Ironline can't verify this is safe for you personally.</p>
+    </div>
+  `;
+}
+function confirmAddSuggestedExercise(){
+  const data = App.state.exerciseSuggestion;
+  if(!data) return;
+  const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  const id = 'custom_' + (slug || 'exercise') + '_' + Date.now().toString(36);
+  const ex = {
+    id, name: data.name, category: data.category, type: data.type,
+    target: data.target, secondary: data.secondary, equipment: data.equipment, difficulty: data.difficulty,
+    instructions: data.instructions, mistakes: data.mistakes, beginnerAlt: data.beginnerAlt,
+    progression: data.progression, regression: data.regression, pattern: data.pattern,
+  };
+  Storage.saveCustomExercise(ex);
+  loadCustomExercisesIntoLibrary();
+  App.state.exerciseSuggestion = null;
+  App.state.exerciseDraftInput = '';
+  App.showToast(`${ex.name} added — find it in the Exercise Library or when adding exercises to a day.`);
+  App.closeModal();
+}
+
+/* =========================================================================
+   UTIL
+========================================================================= */
+function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+App.init();
+</script>
+</body>
+</html>
